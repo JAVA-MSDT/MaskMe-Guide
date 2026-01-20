@@ -1,4 +1,4 @@
-# MaskMe-Guide and use cases for MaskMe Field Masking Library
+# **MaskMe-Guide** and use cases for **MaskMe** field masking library
 
 ## 📋 Overview
 
@@ -136,9 +136,8 @@ class ApplicationStartup{
 
 ### 📖 **Detailed Guides**
 
-- Library Sourcecode:
-- MaskMe Guide on GitHub:
-- Spring Framework Integration Guide:
+- [Library Sourcecode](https://github.com/JAVA-MSDT/maskme)
+- [Spring Framework Integration Guide](/Spring-maskme)
 - Quarkus Framework Integration Guide:
 - Java Based Integration Guide:
 
