@@ -8,6 +8,7 @@ package com.javamsdt.masking.dto;
 
 
 
+import com.javamsdt.masking.maskme.condition.PhoneMaskingCondition;
 import com.javamsdt.maskme.api.annotation.ExcludeMaskMe;
 import com.javamsdt.maskme.api.annotation.MaskMe;
 import com.javamsdt.maskme.implementation.condition.AlwaysMaskMeCondition;
@@ -27,7 +28,7 @@ public record UserDto(
         String email,
         @MaskMe(conditions = {AlwaysMaskMeCondition.class})
         String password,
-        @MaskMe(conditions = {MaskMeOnInput.class}, maskValue = "uuuu")
+        @MaskMe(conditions = {PhoneMaskingCondition.class})
         String phone,
         @ExcludeMaskMe
         AddressDto address,

@@ -3,9 +3,9 @@
  * LinkedIn: https://www.linkedin.com/in/java-msdt/
  * GitHub: https://github.com/JAVA-MSDT
  */
-package com.javamsdt.masking.config;
+package com.javamsdt.masking.maskme.config;
 
-import com.javamsdt.masking.maskconverter.CustomStringConverter;
+import com.javamsdt.masking.maskme.converter.CustomStringConverter;
 import com.javamsdt.maskme.api.condition.MaskMeConditionFactory;
 import com.javamsdt.maskme.api.condition.MaskMeFrameworkProvider;
 import com.javamsdt.maskme.api.converter.MaskMeConverterRegistry;
@@ -26,23 +26,28 @@ import java.util.logging.Level;
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
-public class MaskingConfiguration {
+public class MaskMeConfiguration {
 
     private final ApplicationContext applicationContext;
 
     @PostConstruct
-    public void registerCustomConverters() {
-        MaskMeLogger.enable(Level.FINE);
+    public void setupMaskMe() {
+        // Logger configuration
+        MaskMeLogger.enable(Level.INFO);
 
+        // To register Spring as applicationContext so you can leverage DI inside CustomCondition.
         registerMaskConditionProvider();
-        // Clear Global
-        MaskMeConverterRegistry.clearGlobal();
-        // Register user's custom converters
-        MaskMeConverterRegistry.registerGlobal(new CustomStringConverter());
 
-       // MaskMeFieldAccessUtil.setUserPattern(Pattern.compile("\\{([^}]+)}"));
+        // To override the default converters, or set up a new converter based on your need.
+        setupCustomConverters();
+
+        // Optional: Configure a custom field reference pattern
+        // Default is {fieldName}, you can change to [fieldName] or others
+        // MaskMeFieldAccessUtil.setUserPattern(Pattern.compile("\\{([^}]+)}"));
     }
 
+    // --- built-in conditions --- //
+    // Declare built-in conditions as beans to avoid NoSuchBeanDefinitionException, because the library is pure java.
     @Bean
     public AlwaysMaskMeCondition alwaysMaskMeCondition() {
         return new AlwaysMaskMeCondition();
@@ -52,9 +57,9 @@ public class MaskingConfiguration {
     public MaskMeOnInput maskMeOnInput() {
         return new MaskMeOnInput();
     }
+    // --- built-in conditions --- //
 
-    public void registerMaskConditionProvider() {
-        // One-time registration at startup
+    private void registerMaskConditionProvider() {
         MaskMeConditionFactory.setFrameworkProvider(new MaskMeFrameworkProvider() {
             @Override
             public <T> T getInstance(Class<T> type) {
@@ -66,6 +71,17 @@ public class MaskingConfiguration {
                 }
             }
         });
+    }
+
+    private void setupCustomConverters() {
+        // Clear Global
+        // to avoid any memory leak from the previous application run.
+        // that way you will avoid any custom register to live in memory
+        // due to the live reference from this run
+        MaskMeConverterRegistry.clearGlobal();
+
+        // Register user's custom converters
+        MaskMeConverterRegistry.registerGlobal(new CustomStringConverter());
     }
 
     @PreDestroy

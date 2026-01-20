@@ -4,10 +4,13 @@
  * GitHub: https://github.com/JAVA-MSDT
  * Email: serenitydiver@hotmail.com
  */
-package com.javamsdt.masking.maskconverter;
+package com.javamsdt.masking.maskme.converter;
 
+import com.javamsdt.masking.service.UserService;
 import com.javamsdt.maskme.api.converter.MaskMeConverter;
 import com.javamsdt.maskme.api.utils.MaskMeFieldAccessUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /**
  * User's custom String converter with higher priority
@@ -36,10 +39,6 @@ public class CustomStringConverter implements MaskMeConverter {
         }
 
         if (fieldName.contains("email")) {
-//            if(value.isEmpty()) {
-//                return "[EMAIL PROTECTED]";
-//            }
-            System.out.println("processValue:: " + processValue.length());
             if(processValue.isEmpty()) {
                 return "[EMAIL PROTECTED]";
             }

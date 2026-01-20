@@ -9,10 +9,12 @@ package com.javamsdt.masking.controller;
 import com.javamsdt.masking.domain.User;
 import com.javamsdt.masking.dto.UserDto;
 import com.javamsdt.masking.mapper.UserMapper;
+import com.javamsdt.masking.maskme.condition.PhoneMaskingCondition;
 import com.javamsdt.masking.service.UserService;
 import com.javamsdt.maskme.MaskMeInitializer;
 import com.javamsdt.maskme.implementation.condition.MaskMeOnInput;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,21 +33,10 @@ public class UserController {
     }
 
     @GetMapping("/masked/{id}")
-    public UserDto getMaskedUserById(@PathVariable final Long id,
-                                     @RequestHeader("Mask-Input") String maskInput,
-                                     @RequestHeader("Mask-Phone") String maskPhone) {
+    public UserDto getMaskedUserById(@PathVariable final Long id, @RequestHeader("Mask-Input") String maskInput) {
 
         UserDto userDto = userMapper.toDto(userService.findUserById(id));
         return MaskMeInitializer.mask(userDto, MaskMeOnInput.class, maskInput);
-    }
-
-    @GetMapping("/util/{id}")
-    public UserDto getMaskedUserByIdUtil(@PathVariable final Long id) {
-
-        UserDto userDto = userMapper.toDto(userService.findUserById(id));
-
-        return MaskMeInitializer.mask(userDto);
-
     }
 
     @GetMapping("/user/{id}")
@@ -54,11 +45,17 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserDto> getUsers(@RequestHeader("Mask-Input") String maskInput) {
+    public List<UserDto> getUsers(@RequestHeader("Mask-Input") String maskInput, @RequestHeader("Mask-Phone") String maskPhone) {
 
         return userService.findUsers().stream()
                 .map(user ->
-                        MaskMeInitializer.mask(userMapper.toDto(user), MaskMeOnInput.class, maskInput))
+                        MaskMeInitializer.mask(userMapper.toDto(user),
+                                getMaskedConditionsForGetAllUsers(maskInput, maskPhone)))
                 .toList();
+    }
+
+    private static Object @NonNull [] getMaskedConditionsForGetAllUsers(String maskInput, String maskPhone) {
+        return new Object[]{MaskMeOnInput.class, maskInput,
+                PhoneMaskingCondition.class, maskPhone};
     }
 }

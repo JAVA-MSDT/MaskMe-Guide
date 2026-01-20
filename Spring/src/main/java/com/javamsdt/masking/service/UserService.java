@@ -31,9 +31,9 @@ public class UserService {
     public List<User> findUsers() {
         return List.of(
                 new User(1L, "Ahmed Samy", "one@mail.com", "123456", "01000000000", findAddresses().get(0), LocalDate.of(1985, 1, 25), Gender.MALE, new BigDecimal("20.0"), Instant.now()),
-                new User(2L, "Maria Samy", "two@mail.com", "123456", "01000000000", findAddresses().get(1), LocalDate.of(2014, 2, 8), Gender.FEMALE, new BigDecimal("40.20"), Instant.now()),
-                new User(3L, "Male One", "three@mail.com", "123456", "01000000000", findAddresses().get(2), LocalDate.of(2000, 3, 15), Gender.MALE, new BigDecimal("55.98"), Instant.now()),
-                new User(4L, "Female One", "four@mail.com", "123456", "01000000000", findAddresses().get(3), LocalDate.of(1995, 4, 20), Gender.FEMALE, new BigDecimal("100.46"), Instant.now())
+                new User(2L, "Maria Samy", "two@mail.com", "123456", "01000000011", findAddresses().get(1), LocalDate.of(2014, 2, 8), Gender.FEMALE, new BigDecimal("40.20"), Instant.now()),
+                new User(3L, "Male One", "three@mail.com", "123456", "01000000022", findAddresses().get(2), LocalDate.of(2000, 3, 15), Gender.MALE, new BigDecimal("55.98"), Instant.now()),
+                new User(4L, "Female One", "four@mail.com", "123456", "01000000033", findAddresses().get(3), LocalDate.of(1995, 4, 20), Gender.FEMALE, new BigDecimal("100.46"), Instant.now())
         );
     }
 

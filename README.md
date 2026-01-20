@@ -1,4 +1,4 @@
-# maskme-examples - MaskMe - Field Masking Library
+# maskme-guides - MaskMe - Field Masking Library
 - Example of how to use the MaskMe library in your code.
 
 ## 📋 Overview
@@ -136,6 +136,12 @@ class ApplicationStartup{
 - **Thread Safety**: Built-in ThreadLocal management.
 
 ### 📖 **Detailed Guides**
+
+- Library Sourcecode:
+- MaskMe Guide on GitHub:
+- Spring Framework Integration Guide:
+- Quarkus Framework Integration Guide:
+- Java Based Integration Guide:
 
 | Guide                                                                                         | Description                                                         |
 |-----------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
