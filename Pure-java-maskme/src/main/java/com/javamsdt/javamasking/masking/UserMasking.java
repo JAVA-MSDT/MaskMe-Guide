@@ -31,7 +31,7 @@ import java.util.List;
  */
 @SuppressWarnings("java:S106")
 public class UserMasking {
-    
+
     private final UserService userService;
     private final UserMapper userMapper;
 
@@ -72,7 +72,7 @@ public class UserMasking {
      * // Fields with MaskMeOnInput condition will be masked
      * }</pre>
      *
-     * @param id the user ID to retrieve
+     * @param id        the user ID to retrieve
      * @param maskInput the input value for MaskMeOnInput condition
      */
     public void getMaskedUserById(Long id, String maskInput) {

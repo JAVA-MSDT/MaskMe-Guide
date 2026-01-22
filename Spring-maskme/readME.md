@@ -8,10 +8,12 @@
 ## 🚀 Running the Application
 
 ### Prerequisites
+
 - Java 21+
 - Maven 3.6+
 
 ### Start the Application
+
 ```bash
 # Clone and navigate to the project
 cd Spring-maskme
@@ -25,12 +27,12 @@ The application starts on `http://localhost:9090`
 
 ### Available Endpoints
 
-| Endpoint             | Method | Headers                                        | Description                       |
-|----------------------|--------|------------------------------------------------|-----------------------------------|
-| `/users/{id}`        | GET    | -                                              | Get user without masking          |
-| `/users/masked/{id}` | GET    | `Mask-Input: maskMe`                           | Get user with conditional masking |
-| `/users`             | GET    | `Mask-Input: maskMe`<br>`Mask-Phone: {phone}`  | Get all users with masking        |
-| `/users/user/{id}`   | GET    | -                                              | Get domain entity with masking    |
+| Endpoint             | Method | Headers                                       | Description                       |
+|----------------------|--------|-----------------------------------------------|-----------------------------------|
+| `/users/{id}`        | GET    | -                                             | Get user without masking          |
+| `/users/masked/{id}` | GET    | `Mask-Input: maskMe`                          | Get user with conditional masking |
+| `/users`             | GET    | `Mask-Input: maskMe`<br>`Mask-Phone: {phone}` | Get all users with masking        |
+| `/users/user/{id}`   | GET    | -                                             | Get domain entity with masking    |
 
 ### Test with cURL
 
@@ -51,6 +53,7 @@ curl http://localhost:9090/users/user/1
 ### Expected Responses
 
 #### GET `/users/1` (No Masking)
+
 ```json
 {
   "id": 1,
@@ -70,6 +73,7 @@ curl http://localhost:9090/users/user/1
 ```
 
 #### GET `/users/masked/1` with `Mask-Input: maskMe` (With Masking)
+
 ```json
 {
   "id": 1000,
@@ -89,6 +93,7 @@ curl http://localhost:9090/users/user/1
 ```
 
 #### GET `/users` with `Mask-Phone: 01000000000` (Selective Phone Masking)
+
 ```json
 [
   {
@@ -347,6 +352,7 @@ public record AddressDto(
 ```
 
 **Use Cases:**
+
 - Exclude complex nested objects from masking processing
 - Improve performance by skipping unnecessary fields
 - Preserve original data for non-sensitive fields
@@ -457,6 +463,7 @@ record ErrorResponse(String code, String message) {}
 ### Example 4: Logging Output
 
 #### Enable Logging in Configuration
+
 ```java
 @Configuration
 public class MaskMeConfiguration {
@@ -497,6 +504,7 @@ public class MaskMeConfiguration {
 - **ERROR**: Critical failures (condition creation errors, invalid inputs)
 
 #### Disable Logging for Production
+
 ```java
 @Configuration
 @Profile("production")
@@ -866,26 +874,31 @@ class UserControllerIntegrationTest {
 ## 📝 Best Practices
 
 ### 1. Startup Configuration
+
 - Configure a framework provider once at application startup
 - Clear global converters to prevent memory leaks
 - Register custom converters after clearing globals
 
 ### 2. Bean Management
+
 - Declare built-in conditions as Spring beans
 - Use `@Component` for custom conditions requiring DI
 - Leverage `@ConfigurationProperties` for configuration
 
 ### 3. Controller Design
+
 - Use MaskMeInitializer for cleaner code
 - Handle request headers for dynamic masking
 - Implement proper error handling
 
 ### 4. Memory Management
+
 - Use `@PreDestroy` to clear global converters
 - Clear request-scoped converters in finally blocks
 - Avoid memory leaks with proper cleanup
 
 ### 5. Security Integration
+
 - Integrate with Spring Security for role-based masking
 - Use method-level security annotations
 - Implement authentication-aware conditions
@@ -893,6 +906,7 @@ class UserControllerIntegrationTest {
 ## ⚠️ Common Issues & Solutions
 
 ### Issue 1: NoSuchBeanDefinitionException
+
 ```java
 // Problem: Built-in conditions not found in Spring context
 // Solution: Declare them as beans
@@ -903,6 +917,7 @@ public AlwaysMaskMeCondition alwaysMaskMeCondition() {
 ```
 
 ### Issue 2: Memory Leaks
+
 ```java
 // Problem: Global converters not cleared
 // Solution: Proper cleanup
@@ -913,6 +928,7 @@ public void cleanup() {
 ```
 
 ### Issue 3: Field Pattern Not Working
+
 ```java
 // Problem: Pattern not configured at startup
 // Solution: Configure in @PostConstruct

@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-- This guide covers creating custom masking conditions and configuring field reference patterns in the MaskMe library. 
+- This guide covers creating custom masking conditions and configuring field reference patterns in the MaskMe library.
 - Learn how to implement complex business logic for conditional masking and customize field placeholder syntax.
 
 ## 🎯 Custom Masking Conditions
@@ -34,6 +34,7 @@ public interface MaskMeCondition {
 ### Built-in Conditions
 
 #### AlwaysMaskMeCondition
+
 ```java
 public class AlwaysMaskMeCondition implements MaskMeCondition {
     @Override
@@ -44,6 +45,7 @@ public class AlwaysMaskMeCondition implements MaskMeCondition {
 ```
 
 #### MaskMeOnInput
+
 ```java
 public class MaskMeOnInput implements MaskMeCondition {
     private static final MaskMeLogger logger = MaskMeLogger.getLogger(MaskMeOnInput.class);
@@ -286,14 +288,14 @@ public class MaskMeConfiguration {
 
 #### 2. Available Pattern Options
 
-| Pattern Type                 | Regex Pattern      | Java String                | Example Usage   |
-|------------------------------|--------------------|----------------------------|-----------------|
-| **Curly Braces** (Default)   | `\\{([^}]+)\\}`    | `"\\\\{([^}]+)\\\\}"`      | `{fieldName}`   |
-| **Square Brackets**          | `\\[([^]]+)]`      | `"\\\\[([^]]+)]"`          | `[fieldName]`   |
-| **Parentheses**              | `\\(([^)]+)\\)`    | `"\\\\(([^)]+)\\\\)"`      | `(fieldName)`   |
-| **Angle Brackets**           | `<([^>]+)>`        | `"<([^>]+)>"`              | `<fieldName>`   |
-| **Double Square**            | `\\[\\[([^]]+)]]`  | `"\\\\[\\\\[([^]]+)]]"`    | `[[fieldName]]` |
-| **Dollar Sign**              | `\\$\\{([^}]+)\\}` | `"\\\\$\\\\{([^}]+)\\\\}"` | `${fieldName}`  |
+| Pattern Type               | Regex Pattern      | Java String                | Example Usage   |
+|----------------------------|--------------------|----------------------------|-----------------|
+| **Curly Braces** (Default) | `\\{([^}]+)\\}`    | `"\\\\{([^}]+)\\\\}"`      | `{fieldName}`   |
+| **Square Brackets**        | `\\[([^]]+)]`      | `"\\\\[([^]]+)]"`          | `[fieldName]`   |
+| **Parentheses**            | `\\(([^)]+)\\)`    | `"\\\\(([^)]+)\\\\)"`      | `(fieldName)`   |
+| **Angle Brackets**         | `<([^>]+)>`        | `"<([^>]+)>"`              | `<fieldName>`   |
+| **Double Square**          | `\\[\\[([^]]+)]]`  | `"\\\\[\\\\[([^]]+)]]"`    | `[[fieldName]]` |
+| **Dollar Sign**            | `\\$\\{([^}]+)\\}` | `"\\\\$\\\\{([^}]+)\\\\}"` | `${fieldName}`  |
 
 #### 3. Pattern Configuration Examples
 
@@ -517,6 +519,7 @@ class CustomConditionIntegrationTest {
 ## ⚠️ Common Pitfalls
 
 ### 1. Thread Safety
+
 ```java
 // ❌ Not thread-safe
 public class UnsafeCondition implements MaskMeCondition {
@@ -540,6 +543,7 @@ public class SafeCondition implements MaskMeCondition {
 ```
 
 ### 2. Field Reference Limitations
+
 ```java
 // ❌ Cannot reference nested object fields directly
 @MaskMe(conditions = {AlwaysMaskMeCondition.class}, 
@@ -553,6 +557,7 @@ String description;
 ```
 
 ### 3. Input Type Safety
+
 ```java
 // ❌ Unsafe casting
 @Override

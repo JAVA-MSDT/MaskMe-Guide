@@ -6,11 +6,8 @@
  */
 package com.javamsdt.masking.maskme.converter;
 
-import com.javamsdt.masking.service.UserService;
 import com.javamsdt.maskme.api.converter.MaskMeConverter;
 import com.javamsdt.maskme.api.utils.MaskMeFieldAccessUtil;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * User's custom String converter with higher priority
@@ -39,7 +36,7 @@ public class CustomStringConverter implements MaskMeConverter {
         }
 
         if (fieldName.contains("email")) {
-            if(processValue.isEmpty()) {
+            if (processValue.isEmpty()) {
                 return "[EMAIL PROTECTED]";
             }
             return processValue;

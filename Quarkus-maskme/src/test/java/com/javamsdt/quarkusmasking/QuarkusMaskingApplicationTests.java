@@ -16,6 +16,7 @@ class QuarkusMaskingApplicationTests {
 
     @Test
     void contextLoads() {
-        assertDoesNotThrow(() -> {});
+        assertDoesNotThrow(() -> {
+        });
     }
 }

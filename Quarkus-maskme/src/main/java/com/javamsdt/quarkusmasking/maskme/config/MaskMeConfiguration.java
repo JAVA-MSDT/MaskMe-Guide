@@ -5,19 +5,19 @@
  */
 package com.javamsdt.quarkusmasking.maskme.config;
 
-import com.javamsdt.quarkusmasking.maskme.converter.CustomStringConverter;
 import com.javamsdt.maskme.api.condition.MaskMeConditionFactory;
 import com.javamsdt.maskme.api.condition.MaskMeFrameworkProvider;
 import com.javamsdt.maskme.api.converter.MaskMeConverterRegistry;
 import com.javamsdt.maskme.implementation.condition.AlwaysMaskMeCondition;
 import com.javamsdt.maskme.implementation.condition.MaskMeOnInput;
 import com.javamsdt.maskme.logging.MaskMeLogger;
+import com.javamsdt.quarkusmasking.maskme.converter.CustomStringConverter;
 import io.quarkus.arc.Unremovable;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.CDI;
 
 import java.util.logging.Level;
 
@@ -40,8 +40,8 @@ import java.util.logging.Level;
  * to prevent Quarkus from removing them during build-time optimization.</p>
  *
  * @author Ahmed Samy
- * @since 1.0.0
  * @see io.quarkus.arc.Unremovable
+ * @since 1.0.0
  */
 @ApplicationScoped
 public class MaskMeConfiguration {

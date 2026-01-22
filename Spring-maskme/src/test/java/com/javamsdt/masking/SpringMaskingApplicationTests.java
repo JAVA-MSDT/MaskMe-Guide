@@ -8,9 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @SpringBootTest
 class SpringMaskingApplicationTests {
 
-	@Test
-	void contextLoads() {
-		assertDoesNotThrow(() -> {});
-	}
+    @Test
+    void contextLoads() {
+        assertDoesNotThrow(() -> {
+        });
+    }
 
 }

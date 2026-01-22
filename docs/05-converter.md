@@ -2,16 +2,20 @@
 
 # 🔄 Scoped Converter Registry – Safe Usage Guide
 
-The **Scoped Converter Registry** is a maskMeConverter management system that provides **multiple isolation levels** for safe and flexible maskMeConverter usage.
+The **Scoped Converter Registry** is a maskMeConverter management system that provides **multiple isolation levels** for
+safe and flexible maskMeConverter usage.
 
-This system allows converters to be scoped to specific contexts, preventing cross-contamination and enabling safe testing, multi-tenant applications, and dynamic maskMeConverter management.
-
+This system allows converters to be scoped to specific contexts, preventing cross-contamination and enabling safe
+testing, multi-tenant applications, and dynamic maskMeConverter management.
 
 ## 📋 Overview
 
-The Masking Library provides a flexible maskMeConverter system that allows you to **override or extend** default type conversion behavior. You can create custom converters for specific field types or field names, giving you full control over how masked values are generated.
+The Masking Library provides a flexible maskMeConverter system that allows you to **override or extend** default type
+conversion behavior. You can create custom converters for specific field types or field names, giving you full control
+over how masked values are generated.
 
 ### 🎯 Why Use Custom Converters?
+
 - **Override default behavior** for specific field types
 - **Add field-specific logic** based on field names
 - **Implement business-specific masking rules**
@@ -19,6 +23,7 @@ The Masking Library provides a flexible maskMeConverter system that allows you t
 - **Priority-based execution** ensures your converters run first
 
 ### **Priority System**
+
 - **Default converters**: Priority = 0
 - **User converters**: Should use priority > 0
 - **Higher priority executes first**
@@ -69,11 +74,13 @@ The library uses a modular maskMeConverter architecture with specialized convert
 ```
 
 ## 🚀 Quick Start Guide
+
 ### 📝 Common Use Cases
 
 ### **1. Create Your Custom Converter**
 
 ### **Case 1: Override String Handling for Specific Fields**
+
 ```java
 public class CustomEmailConverter implements Converter {
     
@@ -123,6 +130,7 @@ public class CustomEmailConverter implements Converter {
 ```
 
 ### **Case 1: Override String Handling for Specific Fields**
+
 ```java
 public class SensitiveDataConverter implements Converter {
     
@@ -154,6 +162,7 @@ public class SensitiveDataConverter implements Converter {
 ```
 
 ### **Case 2: Custom Number Formatting**
+
 ```java
 public class FinancialConverter implements Converter {
     
@@ -187,6 +196,7 @@ public class FinancialConverter implements Converter {
 ```
 
 ### **Case 3: Custom Date Formatting**
+
 ```java
 public class CustomDateConverter implements Converter {
     
@@ -218,6 +228,7 @@ public class CustomDateConverter implements Converter {
     }
 }
 ```
+
 ### 🎪 Converter Chain Execution Flow
 
 ```
@@ -247,11 +258,13 @@ public class CustomDateConverter implements Converter {
 ### 🚨 Important Rules
 
 ### **1. Priority Matters**
+
 - **Higher priority** executes first
 - The first maskMeConverter that returns **non-null** wins
 - Set priority > 0 to override defaults
- 
+
 ### **2. Return null to Pass Control**
+
 ```java
 @Override
 public Object convert(String maskingValue, Class<?> targetFieldType, Object originalFieldValue, Object objectContainingMaskedField, String maskedFieldName) {
@@ -263,7 +276,9 @@ public Object convert(String maskingValue, Class<?> targetFieldType, Object orig
 ```
 
 ### **3. Field Context Available**
+
 You get access to:
+
 - `fieldName` - Name of the field being processed
 - `originalValue` - Original field value
 - `objectContainingMaskedField` - The entire object being masked
@@ -272,6 +287,7 @@ You get access to:
 ### **2. Choose Your Scope & Register**
 
 **Option A: Global Scope (Application-wide)**
+
 ```java
 // Affects ALL threads and requests
 private void setupCustomConverters() {
@@ -280,6 +296,7 @@ private void setupCustomConverters() {
 ```
 
 **Option B: Thread-Local Scope (Thread isolation)**
+
 ```java
 // Affects ONLY current thread
 private void setupCustomConverters() {
@@ -288,6 +305,7 @@ private void setupCustomConverters() {
 ```
 
 **Option C: Request Scope (Web requests)**
+
 ```java
 // Affects ONLY current HTTP request
 private void setupCustomConverters() {
@@ -339,6 +357,7 @@ public class MaskingConfiguration {
 ```
 
 #### **Web Request Filter (Spring Web)**
+
 ```java
 @Component
 public class RequestScopeFilter implements Filter {
@@ -456,6 +475,7 @@ public class BackgroundJobService {
 ### **⚡ Quarkus Application**
 
 #### **Quarkus Configuration**
+
 ```java
 @ApplicationScoped
 public class MaskingInitializer {
@@ -598,6 +618,7 @@ class UserControllerIntegrationTest {
 ## 🔄 Advanced Scenarios
 
 ### **Multi-Tenant Application**
+
 ```java
 @Component
 public class TenantConverterManager {
@@ -640,6 +661,7 @@ public class TenantConverterManager {
 ```
 
 ### **Dynamic Converter Loading**
+
 ```java
 @Service
 public class DynamicConverterService {
@@ -661,6 +683,7 @@ public class DynamicConverterService {
 ```
 
 ### **Blue-Green Deployment**
+
 ```java
 @Configuration
 @Profile("blue")
@@ -690,6 +713,7 @@ public class GreenDeploymentConfig {
 ## ⚠️ Safety Rules & Best Practices
 
 ### **DOs ✅**
+
 ```java
 // ✅ SAFE: Clear global converters at startup
 @PostConstruct
@@ -718,6 +742,7 @@ public void handleRequest(HttpServletRequest request) {
 ```
 
 ### **DON'Ts ❌**
+
 ```java
 // ❌ DANGEROUS: Clear global during request processing
 public void someControllerMethod() {
@@ -741,6 +766,7 @@ public void confusingMethod() {
 ## 🔍 Debugging & Monitoring
 
 ### **View Active Converters**
+
 ```java
 // Get all converters by scope
 private void debugConverters() {
@@ -765,6 +791,7 @@ private void debugConverters() {
 ```
 
 ### **Monitor Scope Activity**
+
 ```java
 @Aspect
 @Component
@@ -834,6 +861,7 @@ The **Scoped Converter Registry** provides:
 5. **✅ Production Ready** - Battle-tested scope management
 
 **Choose your scope wisely:**
+
 - **Global**: Application defaults, shared libraries
 - **Thread**: Tests, background jobs, isolated processing
 - **Request**: Web applications, user-specific rules

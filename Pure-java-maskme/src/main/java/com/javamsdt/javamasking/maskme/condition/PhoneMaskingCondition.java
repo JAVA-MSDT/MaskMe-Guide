@@ -44,7 +44,7 @@ public class PhoneMaskingCondition implements MaskMeCondition {
      * User service for validating phone numbers against the database.
      */
     private final UserService userService;
-    
+
     /**
      * Runtime input value to compare against the field value.
      * Set via {@link #setInput(Object)} method.
@@ -58,7 +58,7 @@ public class PhoneMaskingCondition implements MaskMeCondition {
      *   <li>Phone number exists in the user database</li>
      * </ol>
      *
-     * @param maskedFieldValue the current value of the field being evaluated
+     * @param maskedFieldValue            the current value of the field being evaluated
      * @param objectContainingMaskedField the object containing the field
      * @return true if the field should be masked, false otherwise
      */

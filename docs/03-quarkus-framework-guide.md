@@ -600,26 +600,31 @@ class NativeMaskingIT extends MaskingIntegrationTest {
 ## 📝 Best Practices
 
 ### 1. CDI Configuration
+
 - Use `@ApplicationScoped` for singleton conditions
 - Inject BeanManager for dynamic bean resolution
 - Configure a framework provider once at startup
 
 ### 2. Configuration Management
+
 - Use `@ConfigMapping` for type-safe configuration
 - Leverage profile-specific settings
 - Configure field patterns at startup
 
 ### 3. Native Compilation
+
 - Register reflection classes for conditions
 - Use `@RegisterForReflection` annotation
 - Test native compilation with integration tests
 
 ### 4. Resource Design
+
 - Use MaskMeInitializer for cleaner code
 - Handle JAX-RS headers for dynamic masking
 - Implement proper exception handling
 
 ### 5. Memory Management
+
 - Use `@PreDestroy` to clear global converters
 - Clear request-scoped converters properly
 - Avoid memory leaks with the CDI lifecycle
@@ -627,6 +632,7 @@ class NativeMaskingIT extends MaskingIntegrationTest {
 ## ⚠️ Common Issues & Solutions
 
 ### Issue 1: CDI Bean Not Found
+
 ```java
 // Problem: Built-in conditions not found in CDI context
 // Solution: Use producer methods
@@ -638,6 +644,7 @@ public AlwaysMaskMeCondition alwaysMaskMeCondition() {
 ```
 
 ### Issue 2: Native Compilation Failures
+
 ```java
 // Problem: Reflection not configured for native
 // Solution: Register classes for reflection
@@ -650,6 +657,7 @@ public class ReflectionConfiguration {
 ```
 
 ### Issue 3: Configuration Not Loading
+
 ```java
 // Problem: Configuration properties not injected
 // Solution: Use proper configuration mapping
@@ -660,6 +668,7 @@ public interface MaskMeConfig {
 ```
 
 ### Issue 4: BeanManager Injection Issues
+
 ```java
 // Problem: BeanManager not available
 // Solution: Use CDI.current() as fallback
@@ -675,11 +684,13 @@ private <T> T getCDIBean(Class<T> type) {
 ## 🚀 Performance Considerations
 
 ### Native Compilation Optimizations
+
 - Register only necessary classes for reflection
 - Use build-time configuration when possible
 - Minimize runtime reflection usage
 
 ### CDI Optimizations
+
 - Use `@ApplicationScoped` for stateless conditions
 - Avoid `@RequestScoped` for heavy operations
 - Cache frequently used beans

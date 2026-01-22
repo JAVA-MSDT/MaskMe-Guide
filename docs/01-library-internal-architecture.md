@@ -5,7 +5,8 @@
 ## 📋 Overview
 
 - This document provides detailed information about the internal architecture and components of the MaskMe library.
-- This is intended for developers who want to understand how the library works internally, provide suggestions, enhancements, or extend its functionality.
+- This is intended for developers who want to understand how the library works internally, provide suggestions,
+  enhancements, or extend its functionality.
 
 ## 🏛️ Project Architecture Diagram
 
@@ -162,6 +163,7 @@ public @interface MaskMe {
 **Purpose**: Marks fields for masking with specified conditions and mask values.
 
 **Key Features**:
+
 - Supports fields and record components.
 - Runtime retention for reflection-based processing.
 - Multiple condition support through an array.
@@ -182,6 +184,7 @@ public interface MaskMeCondition {
 **Purpose**: Defines the contract for masking conditions.
 
 **Key Features**:
+
 - `shouldMask()`: Core logic to determine if masking should occur.
 - `setInput()`: Optional method to receive runtime input.
 - Access to both field value and containing object for context-aware decisions.
@@ -191,6 +194,7 @@ public interface MaskMeCondition {
 **Purpose**: The main processing engine that handles masking logic.
 
 **Key Responsibilities**:
+
 - Reflection-based field discovery.
 - Condition evaluation.
 - Type conversion coordination.
@@ -198,6 +202,7 @@ public interface MaskMeCondition {
 - Nested object processing.
 
 **Key Methods**:
+
 - `process(T object)`: Main entry point for masking.
 - `setConditionInput(Class<? extends MaskMeCondition> conditionClass, Object input)`: Set condition inputs.
 - `clearInputs()`: Clean up ThreadLocal storage.
@@ -207,12 +212,14 @@ public interface MaskMeCondition {
 **Purpose**: Simplified facade for common masking operations.
 
 **Key Features**:
+
 - Static utility methods.
 - Automatic ThreadLocal cleanup.
 - Varargs support for condition-input pairs.
 - Thread-safe operation.
 
 **Benefits**:
+
 - Reduces boilerplate code.
 - Prevents memory leaks through automatic cleanup.
 - Provides a cleaner API for common use cases.
@@ -244,40 +251,46 @@ The library uses a modular converter system with the following hierarchy:
 ### Built-in Converters
 
 #### 1. PrimitiveConverter
+
 - **Handles**: Character, Boolean, primitives, and wrappers
 - **Priority**: 0
 - **Special Features**: Handles null values and primitive type conversion
 
 #### 2. NumberConverter
+
 - **Handles**: All numeric types (byte, int, long, float, double, BigDecimal, BigInteger)
 - **Priority**: 0
-- **Special Features**: 
-  - Blank mask value handling (returns 0 or original value manipulation)
-  - Proper scale handling for BigDecimal
+- **Special Features**:
+    - Blank mask value handling (returns 0 or original value manipulation)
+    - Proper scale handling for BigDecimal
 
 #### 3. DateTimeConverter
+
 - **Handles**: All Java 8+ date/time types and legacy Date types
 - **Priority**: 0
 - **Supported Types**:
-  - LocalDate, LocalDateTime, LocalTime
-  - Instant, ZonedDateTime, OffsetDateTime
-  - Year, YearMonth, MonthDay
-  - java.util.Date, java.sql.Date, java.sql.Time, java.sql.Timestamp
+    - LocalDate, LocalDateTime, LocalTime
+    - Instant, ZonedDateTime, OffsetDateTime
+    - Year, YearMonth, MonthDay
+    - java.util.Date, java.sql.Date, java.sql.Time, java.sql.Timestamp
 
 #### 4. SpecialTypeConverter
+
 - **Handles**: UUID, File, Path, Enums
 - **Priority**: 0
 - **Special Features**:
-  - Case-insensitive enum conversion
-  - Path string to Path object conversion
-  - UUID string parsing
+    - Case-insensitive enum conversion
+    - Path string to Path object conversion
+    - UUID string parsing
 
 #### 5. FallbackConverter
+
 - **Handles**: Any type not handled by other converters
 - **Priority**: 0
 - **Behavior**: Returns null for unknown types, allowing graceful degradation
 
 #### 6. StringConverter
+
 - **Handles**: String types
 - **Priority**: 0
 - **Behavior**: Returns null if there is nothing to handle, allowing graceful degradation
@@ -327,6 +340,7 @@ public interface MaskMeFrameworkProvider {
 **Purpose**: Abstracts framework-specific bean resolution.
 
 **Implementation Examples**:
+
 - Spring: Uses ApplicationContext.getBean().
 - CDI: Uses BeanManager.
 - Custom: Manual instance creation.
@@ -348,6 +362,7 @@ public class MaskMeConditionFactory {
 ```
 
 **Key Features**:
+
 - Framework-agnostic condition instantiation.
 - Dependency injection support.
 - Fallback to reflection-based creation.
@@ -357,9 +372,9 @@ public class MaskMeConditionFactory {
 ### Field Discovery Process
 
 1. **Class Analysis**: Determine if an object is a Record or regular class.
-2. **Field Extraction**: 
-   - Records: Use record components.
-   - Classes: Use declared fields.
+2. **Field Extraction**:
+    - Records: Use record components.
+    - Classes: Use declared fields.
 3. **Annotation Scanning**: Find fields with @MaskMe annotation.
 4. **Nested Object Detection**: Identify fields that need recursive processing.
 
@@ -394,16 +409,19 @@ Output Masked Object
 The library supports dynamic field referencing using configurable patterns:
 
 #### Default Pattern: `{fieldName}`
+
 - Regex: `\\{([^}]+)\\}`
 - Captures field names within curly braces.
 - Example: `"{name}@masked.com"` → `"Ahmed@masked.com"`
 
 #### Custom Pattern Support
+
 - Configurable through `MaskMeFieldAccessUtil.setUserPattern()`
 - Supports various bracket types: `{}`, `[]`, `()`, `<>`, `[[]]`
 - Pattern validation ensures single capturing group.
 
 #### Resolution Process
+
 1. **Pattern Matching**: Find all field references in mask value.
 2. **Field Lookup**: Resolve field names to actual values.
 3. **Value Substitution**: Replace references with actual field values.
@@ -421,6 +439,7 @@ private static final ThreadLocal<Map<Class<? extends MaskMeCondition>, Object>>
 ```
 
 **Benefits**:
+
 - Thread isolation prevents cross-request contamination.
 - No synchronization overhead.
 - Automatic cleanup prevents memory leaks.
@@ -428,11 +447,13 @@ private static final ThreadLocal<Map<Class<? extends MaskMeCondition>, Object>>
 ### Memory Management
 
 #### Automatic Cleanup (MaskMeInitializer)
+
 - ThreadLocal cleanup in finally blocks.
 - No manual intervention is required.
 - Exception-safe cleanup.
 
 #### Manual Cleanup (MaskMeProcessor)
+
 - Explicit `clearInputs()` call required.
 - Developer responsibility.
 - More control over cleanup timing.
@@ -442,11 +463,13 @@ private static final ThreadLocal<Map<Class<? extends MaskMeCondition>, Object>>
 ### Object Creation Strategy
 
 #### Records
+
 - Use canonical constructor.
 - Parameter order matching.
 - Immutable object creation.
 
 #### Regular Classes
+
 - Default constructor instantiation.
 - Field-by-field assignment.
 - Setter method utilization when available.
@@ -483,17 +506,20 @@ private static final ThreadLocal<Map<Class<? extends MaskMeCondition>, Object>>
 ## 📊 Performance Characteristics
 
 ### Time Complexity
+
 - **Field Discovery**: O(n) where n = number of fields.
 - **Condition Evaluation**: O(c) where c = number of conditions per field.
 - **Type Conversion**: O(1) for most types.
 - **Overall**: O(n × c) for flat objects, O(n × c × d) for nested objects (d = depth).
 
 ### Space Complexity
+
 - **Memory Usage**: O(n) for object duplication.
 - **ThreadLocal Storage**: O(c) per thread for condition inputs.
 - **Converter Registry**: O(r) where r = number of registered converters.
 
 ### Optimization Strategies
+
 - **Early Exit**: Conditions evaluated in order, first match wins.
 - **Switch Expressions**: Modern Java syntax for efficient type matching.
 - **Minimal Reflection**: Only when necessary for object creation.

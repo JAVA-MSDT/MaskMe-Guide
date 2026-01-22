@@ -6,8 +6,8 @@
  */
 package com.javamsdt.quarkusmasking.maskme.condition;
 
-import com.javamsdt.quarkusmasking.service.UserService;
 import com.javamsdt.maskme.api.condition.MaskMeCondition;
+import com.javamsdt.quarkusmasking.service.UserService;
 import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -49,8 +49,8 @@ import jakarta.enterprise.context.ApplicationScoped;
  * </p>
  *
  * @author Ahmed Samy
- * @since 1.0.0
  * @see io.quarkus.arc.Unremovable
+ * @since 1.0.0
  */
 @ApplicationScoped
 @Unremovable
@@ -61,7 +61,7 @@ public class PhoneMaskingCondition implements MaskMeCondition {
      * Injected by Quarkus CDI via constructor.
      */
     private final UserService userService;
-    
+
     /**
      * Runtime input value to compare against the field value.
      * Set via {@link #setInput(Object)} method by MaskMe library.
@@ -87,7 +87,7 @@ public class PhoneMaskingCondition implements MaskMeCondition {
      *   <li>Phone number exists in the user database</li>
      * </ol>
      *
-     * @param maskedFieldValue the current value of the field being evaluated
+     * @param maskedFieldValue            the current value of the field being evaluated
      * @param objectContainingMaskedField the object containing the field
      * @return true if the field should be masked, false otherwise
      */

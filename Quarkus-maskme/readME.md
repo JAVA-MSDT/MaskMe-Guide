@@ -8,10 +8,12 @@
 ## 🚀 Running the Application
 
 ### Prerequisites
+
 - Java 21+
 - Maven 3.6+
 
 ### Start the Application
+
 ```bash
 # Clone and navigate to the project
 cd Quarkus-maskme
@@ -25,12 +27,12 @@ The application starts on `http://localhost:9091`
 
 ### Available Endpoints
 
-| Endpoint             | Method | Headers                                        | Description                       |
-|----------------------|--------|------------------------------------------------|-----------------------------------|
-| `/users/{id}`        | GET    | -                                              | Get user without masking          |
-| `/users/masked/{id}` | GET    | `Mask-Input: maskMe`                           | Get user with conditional masking |
-| `/users`             | GET    | `Mask-Input: maskMe`<br>`Mask-Phone: {phone}`  | Get all users with masking        |
-| `/users/user/{id}`   | GET    | -                                              | Get domain entity with masking    |
+| Endpoint             | Method | Headers                                       | Description                       |
+|----------------------|--------|-----------------------------------------------|-----------------------------------|
+| `/users/{id}`        | GET    | -                                             | Get user without masking          |
+| `/users/masked/{id}` | GET    | `Mask-Input: maskMe`                          | Get user with conditional masking |
+| `/users`             | GET    | `Mask-Input: maskMe`<br>`Mask-Phone: {phone}` | Get all users with masking        |
+| `/users/user/{id}`   | GET    | -                                             | Get domain entity with masking    |
 
 ### Test with cURL
 
@@ -192,22 +194,26 @@ public class UserResource {
 ## 📝 Best Practices
 
 ### 1. CDI Configuration
+
 - Use `@ApplicationScoped` for singleton conditions
 - **CRITICAL**: Always add `@Unremovable` to condition beans (Quarkus removes unused beans at build time)
 - Use `CDI.current().select(type).get()` for programmatic bean lookup
 - Configure framework provider at startup using `@Observes StartupEvent`
 
 ### 2. Bean Discovery
+
 - Quarkus optimizes by removing beans not directly injected
 - Beans looked up programmatically need `@Unremovable`
 - Alternative: Add `META-INF/beans.xml` with `bean-discovery-mode="all"`
 
 ### 3. Resource Design
+
 - Use MaskMeInitializer for cleaner code
 - Handle JAX-RS headers for dynamic masking
 - Implement proper exception handling
 
 ### 4. Memory Management
+
 - Use `@Observes ShutdownEvent` to clear global converters
 - Clear request-scoped converters properly
 - Avoid memory leaks with CDI lifecycle
@@ -238,6 +244,7 @@ public AlwaysMaskMeCondition alwaysMaskMeCondition() {
 ### Issue 2: Beans Marked as Unused During Build
 
 **Error Message**:
+
 ```
 CDI: programmatic lookup problem detected
 At least one bean matched the required type but was marked as unused and removed during build
@@ -281,16 +288,17 @@ private void registerFrameworkProvider() {
 
 ## 🔑 Key Differences: Quarkus vs Spring
 
-| Aspect | Spring | Quarkus |
-|--------|--------|----------|
-| **Bean Registration** | `@Bean` methods | `@Produces` methods |
-| **Bean Lookup** | `applicationContext.getBean(type)` | `CDI.current().select(type).get()` |
-| **Bean Lifecycle** | All beans kept at runtime | Unused beans removed at build time |
-| **Programmatic Lookup** | Works automatically | Requires `@Unremovable` |
-| **Constructor Injection** | Works with `@Component` | Works with `@ApplicationScoped` + producer |
-| **Optimization** | Runtime optimization | Build-time optimization |
+| Aspect                    | Spring                             | Quarkus                                    |
+|---------------------------|------------------------------------|--------------------------------------------|
+| **Bean Registration**     | `@Bean` methods                    | `@Produces` methods                        |
+| **Bean Lookup**           | `applicationContext.getBean(type)` | `CDI.current().select(type).get()`         |
+| **Bean Lifecycle**        | All beans kept at runtime          | Unused beans removed at build time         |
+| **Programmatic Lookup**   | Works automatically                | Requires `@Unremovable`                    |
+| **Constructor Injection** | Works with `@Component`            | Works with `@ApplicationScoped` + producer |
+| **Optimization**          | Runtime optimization               | Build-time optimization                    |
 
 **Why the difference?**
+
 - Spring keeps all beans for runtime flexibility
 - Quarkus removes unused beans for faster startup and lower memory usage
 - Quarkus optimizes for cloud-native and serverless deployments
@@ -318,18 +326,18 @@ mvn test -X
 
 The `UserResourceIntegrationTest` covers all key MaskMe features:
 
-| Test | What It Verifies |
-|------|------------------|
-| `shouldReturnOriginalUserData` | Unmasked endpoint returns original data |
-| `shouldMaskSensitiveFieldsWhenConditionMatches` | MaskMeOnInput condition masks fields correctly |
-| `shouldNotMaskWhenConditionDoesNotMatch` | Conditions only trigger with matching input |
-| `shouldMaskOnlyMatchingPhoneNumber` | Custom PhoneMaskingCondition works with CDI |
-| `shouldAlwaysMaskFieldsOnDomainEntity` | AlwaysMaskMeCondition masks without input |
-| `shouldNotProcessExcludedNestedObject` | @ExcludeMaskMe prevents nested processing |
-| `shouldReplacePlaceholdersWithFieldValues` | Field referencing {fieldName} works |
-| `shouldUseCustomConverterWithHigherPriority` | Custom converters override defaults |
-| `shouldConvertMaskValuesToCorrectTypes` | Type conversion for Long, LocalDate, BigDecimal, Instant |
-| `shouldRecursivelyMaskNestedObjectFields` | Nested object masking works recursively |
+| Test                                            | What It Verifies                                         |
+|-------------------------------------------------|----------------------------------------------------------|
+| `shouldReturnOriginalUserData`                  | Unmasked endpoint returns original data                  |
+| `shouldMaskSensitiveFieldsWhenConditionMatches` | MaskMeOnInput condition masks fields correctly           |
+| `shouldNotMaskWhenConditionDoesNotMatch`        | Conditions only trigger with matching input              |
+| `shouldMaskOnlyMatchingPhoneNumber`             | Custom PhoneMaskingCondition works with CDI              |
+| `shouldAlwaysMaskFieldsOnDomainEntity`          | AlwaysMaskMeCondition masks without input                |
+| `shouldNotProcessExcludedNestedObject`          | @ExcludeMaskMe prevents nested processing                |
+| `shouldReplacePlaceholdersWithFieldValues`      | Field referencing {fieldName} works                      |
+| `shouldUseCustomConverterWithHigherPriority`    | Custom converters override defaults                      |
+| `shouldConvertMaskValuesToCorrectTypes`         | Type conversion for Long, LocalDate, BigDecimal, Instant |
+| `shouldRecursivelyMaskNestedObjectFields`       | Nested object masking works recursively                  |
 
 ### Expected Test Output
 

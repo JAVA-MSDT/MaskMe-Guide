@@ -2,7 +2,9 @@
 
 ## 📋 Overview
 
-MaskMe is a modern, annotation-based Java library for dynamically masking sensitive data in objects returned when calling HTTP GET. It supports both regular Java classes and Java Records, with conditional masking based on runtime inputs and framework integration.
+MaskMe is a modern, annotation-based Java library for dynamically masking sensitive data in objects returned when
+calling HTTP GET. It supports both regular Java classes and Java Records, with conditional masking based on runtime
+inputs and framework integration.
 
 ## 🚀 Key Features
 
@@ -20,6 +22,7 @@ MaskMe is a modern, annotation-based Java library for dynamically masking sensit
 ## 📦 Installation
 
 ### Maven
+
 ```xml
 <dependency>
     <groupId>com.javamsdt</groupId>
@@ -29,6 +32,7 @@ MaskMe is a modern, annotation-based Java library for dynamically masking sensit
 ```
 
 ### Gradle
+
 ```groovy
 implementation 'com.javamsdt:maskme:1.0.0'
 ```
@@ -69,22 +73,26 @@ public class UserController {
 
 ### 🔧 **Logging Configuration**
 
-MaskMe includes zero-overhead logging disabled by default for production performance. Enable it for debugging and monitoring.
+MaskMe includes zero-overhead logging disabled by default for production performance. Enable it for debugging and
+monitoring.
 
 #### **Configuration Options**
 
 **Via System Properties:**
+
 ```bash
 -Dmaskme.logging.enabled=true -Dmaskme.logging.level=DEBUG
 ```
 
 **Via Environment Variables:**
+
 ```bash
 export MASKME_LOGGING_ENABLED=true
 export MASKME_LOGGING_LEVEL=DEBUG
 ```
 
 **Programmatically:**
+
 ```java
 class ApplicationStartup{
     public void runOnlyOnce() {
@@ -99,18 +107,21 @@ class ApplicationStartup{
 ```
 
 #### **Log Levels**
+
 - `DEBUG`: Detailed operation traces (condition creation, field processing).
 - `INFO`: High-level operations (processor initialization, framework setup).
 - `WARN`: Recoverable issues (fallback conversions, missing fields).
 - `ERROR`: Critical failures (condition creation errors, invalid inputs).
 
 #### **Level Mapping**
+
 - `DEBUG` → `Level.FINE` (Java logging).
 - `INFO` → `Level.INFO`
 - `WARN` → `Level.WARNING`
 - `ERROR` → `Level.SEVERE`
 
 #### **What Gets Logged**
+
 - Framework provider registration.
 - Condition creation and evaluation.
 - Field type conversions.
@@ -118,13 +129,15 @@ class ApplicationStartup{
 - Processing errors and fallbacks.
 
 #### **Performance Notes**
+
 - **Zero cost when disabled** – No performance impact in production.
 - Uses lazy evaluation with suppliers for expensive operations.
 - Thread-safe logging with minimal overhead.
 - Debug messages are prefixed with `[DEBUGGING]` for easy identification,
     - Due to the formating limitation between java standard logging and framework logging.
     - `FINE` level doesn't log in the same format as others.
-    - eg, `2026-01-10T16:57:01.222+02:00  INFO 29836 --- [masking] [nio-9090-exec-3] c.j.m.i.condition.MaskMeOnInput: [DEBUGGING] Input set to: maskMe`
+    - eg,
+      `2026-01-10T16:57:01.222+02:00  INFO 29836 --- [masking] [nio-9090-exec-3] c.j.m.i.condition.MaskMeOnInput: [DEBUGGING] Input set to: maskMe`
 
 ### 🔧 **Core Concepts**
 
@@ -152,6 +165,7 @@ class ApplicationStartup{
 ### ⚡ **Quick Examples**
 
 #### Basic Masking
+
 ```java
 // Always mask
 @MaskMe(conditions = {AlwaysMaskMeCondition.class}, maskValue = "***")
@@ -163,12 +177,14 @@ String conditionalData;
 ```
 
 #### Field References
+
 ```java
 @MaskMe(conditions = {AlwaysMaskMeCondition.class}, maskValue = "{firstName}@company.com")
 String email; // Results in "Ahmed@company.com" if the firstName is "Ahmed"
 ```
 
 #### Multiple Conditions
+
 ```java
 @MaskMe(conditions = {RoleBasedCondition.class, EnvironmentCondition.class})
 String data; // Masked if ANY condition returns true

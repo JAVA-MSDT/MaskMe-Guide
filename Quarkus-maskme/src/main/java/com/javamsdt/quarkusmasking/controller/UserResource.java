@@ -6,13 +6,13 @@
  */
 package com.javamsdt.quarkusmasking.controller;
 
+import com.javamsdt.maskme.MaskMeInitializer;
+import com.javamsdt.maskme.implementation.condition.MaskMeOnInput;
 import com.javamsdt.quarkusmasking.domain.User;
 import com.javamsdt.quarkusmasking.dto.UserDto;
 import com.javamsdt.quarkusmasking.mapper.UserMapper;
 import com.javamsdt.quarkusmasking.maskme.condition.PhoneMaskingCondition;
 import com.javamsdt.quarkusmasking.service.UserService;
-import com.javamsdt.maskme.MaskMeInitializer;
-import com.javamsdt.maskme.implementation.condition.MaskMeOnInput;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -80,7 +80,7 @@ public class UserResource {
      * Headers: Mask-Input: maskMe
      * }</pre>
      *
-     * @param id the user ID
+     * @param id        the user ID
      * @param maskInput the input value for MaskMeOnInput condition (from header)
      * @return UserDto with conditionally masked fields
      */

@@ -77,7 +77,7 @@ public class UserController {
      * Headers: Mask-Input: maskMe
      * }</pre>
      *
-     * @param id the user ID
+     * @param id        the user ID
      * @param maskInput the input value for MaskMeOnInput condition (from header)
      * @return UserDto with conditionally masked fields
      */

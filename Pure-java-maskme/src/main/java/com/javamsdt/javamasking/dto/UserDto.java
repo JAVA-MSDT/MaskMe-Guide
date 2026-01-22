@@ -7,7 +7,6 @@
 package com.javamsdt.javamasking.dto;
 
 
-
 import com.javamsdt.javamasking.maskme.condition.PhoneMaskingCondition;
 import com.javamsdt.maskme.api.annotation.ExcludeMaskMe;
 import com.javamsdt.maskme.api.annotation.MaskMe;

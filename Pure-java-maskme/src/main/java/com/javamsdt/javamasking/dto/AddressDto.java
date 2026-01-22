@@ -12,15 +12,15 @@ import com.javamsdt.maskme.implementation.condition.AlwaysMaskMeCondition;
 import com.javamsdt.maskme.implementation.condition.MaskMeOnInput;
 
 public record AddressDto(
-         Long id,
-         String street,
-         String building,
-         @MaskMe(conditions = {AlwaysMaskMeCondition.class})
-         String city,
-         String state,
-         @MaskMe(conditions = {MaskMeOnInput.class}, maskValue = "[ZIP_MASKED]")
-         String zipCode,
-         String country,
-         GeoLocationDto geoLocation
+        Long id,
+        String street,
+        String building,
+        @MaskMe(conditions = {AlwaysMaskMeCondition.class})
+        String city,
+        String state,
+        @MaskMe(conditions = {MaskMeOnInput.class}, maskValue = "[ZIP_MASKED]")
+        String zipCode,
+        String country,
+        GeoLocationDto geoLocation
 ) {
 }

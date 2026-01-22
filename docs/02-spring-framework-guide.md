@@ -499,26 +499,31 @@ class UserControllerIntegrationTest {
 ## 📝 Best Practices
 
 ### 1. Startup Configuration
+
 - Configure a framework provider once at application startup
 - Clear global converters to prevent memory leaks
 - Register custom converters after clearing globals
 
 ### 2. Bean Management
+
 - Declare built-in conditions as Spring beans
 - Use `@Component` for custom conditions requiring DI
 - Leverage `@ConfigurationProperties` for configuration
 
 ### 3. Controller Design
+
 - Use MaskMeInitializer for cleaner code
 - Handle request headers for dynamic masking
 - Implement proper error handling
 
 ### 4. Memory Management
+
 - Use `@PreDestroy` to clear global converters
 - Clear request-scoped converters in finally blocks
 - Avoid memory leaks with proper cleanup
 
 ### 5. Security Integration
+
 - Integrate with Spring Security for role-based masking
 - Use method-level security annotations
 - Implement authentication-aware conditions
@@ -526,6 +531,7 @@ class UserControllerIntegrationTest {
 ## ⚠️ Common Issues & Solutions
 
 ### Issue 1: NoSuchBeanDefinitionException
+
 ```java
 // Problem: Built-in conditions not found in Spring context
 // Solution: Declare them as beans
@@ -536,6 +542,7 @@ public AlwaysMaskMeCondition alwaysMaskMeCondition() {
 ```
 
 ### Issue 2: Memory Leaks
+
 ```java
 // Problem: Global converters not cleared
 // Solution: Proper cleanup
@@ -546,6 +553,7 @@ public void cleanup() {
 ```
 
 ### Issue 3: Field Pattern Not Working
+
 ```java
 // Problem: Pattern not configured at startup
 // Solution: Configure in @PostConstruct

@@ -36,7 +36,7 @@ public class CustomStringConverter implements MaskMeConverter {
         }
 
         if (fieldName.contains("email")) {
-            if(processValue.isEmpty()) {
+            if (processValue.isEmpty()) {
                 return "[EMAIL PROTECTED]";
             }
             return processValue;

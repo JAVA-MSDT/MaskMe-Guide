@@ -6,18 +6,19 @@
  */
 package com.javamsdt.quarkusmasking.controller;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
-
 import com.javamsdt.quarkusmasking.dto.UserDto;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
 @DisplayName("UserResource Integration Tests - MaskMe Library")

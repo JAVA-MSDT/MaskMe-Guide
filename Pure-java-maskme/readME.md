@@ -9,10 +9,12 @@
 ## 🚀 Running the Application
 
 ### Prerequisites
+
 - Java 21+
 - Maven 3.6+
 
 ### Build and Run
+
 ```bash
 # Clone and navigate to the project
 cd Pure-java-maskme
@@ -212,21 +214,25 @@ public class UserMasking {
 ## 📝 Best Practices
 
 ### 1. Manual Dependency Injection
+
 - Use a Map-based registry for condition instances
 - Register all conditions with dependencies at startup
 - Keep the registry simple and focused
 
 ### 2. Memory Management
+
 - Always call `destroy()` when shutting down
 - Clear global converters to prevent memory leaks
 - Clear the instance registry
 
 ### 3. Service Design
+
 - Keep services stateless when possible
 - Use constructor injection for dependencies
 - Initialize all services before configuring MaskMe
 
 ### 4. Testing
+
 - Set up MaskMe configuration in `@BeforeAll`
 - Use the same configuration across all tests
 - Clean up resources after tests if needed
@@ -274,16 +280,17 @@ public static void destroy() {
 
 ## 🔑 Key Differences: Pure Java vs Framework
 
-| Aspect | Pure Java | Spring/Quarkus |
-|--------|-----------|----------------|
-| **Dependency Injection** | Manual Map-based registry | Automatic via framework |
-| **Bean Management** | Manual instance creation | Framework-managed beans |
-| **Configuration** | Static methods | @Configuration/@ApplicationScoped |
-| **Condition Registration** | Manual Map.put() | @Component/@Produces |
-| **Complexity** | Simple, explicit | More abstraction |
-| **Dependencies** | Zero framework deps | Framework required |
+| Aspect                     | Pure Java                 | Spring/Quarkus                    |
+|----------------------------|---------------------------|-----------------------------------|
+| **Dependency Injection**   | Manual Map-based registry | Automatic via framework           |
+| **Bean Management**        | Manual instance creation  | Framework-managed beans           |
+| **Configuration**          | Static methods            | @Configuration/@ApplicationScoped |
+| **Condition Registration** | Manual Map.put()          | @Component/@Produces              |
+| **Complexity**             | Simple, explicit          | More abstraction                  |
+| **Dependencies**           | Zero framework deps       | Framework required                |
 
 **When to use Pure Java:**
+
 - Lightweight applications
 - No framework dependencies desired
 - Simple use cases
@@ -291,6 +298,7 @@ public static void destroy() {
 - Embedded systems
 
 **When to use Framework:**
+
 - Large applications
 - Complex dependency graphs
 - Need framework features (web, security, etc.)
@@ -315,18 +323,18 @@ mvn test -X
 
 The `UserMaskingTest` covers all key MaskMe features:
 
-| Test | What It Verifies |
-|------|------------------|
-| `shouldReturnOriginalUserData` | Unmasked data returns original values |
-| `shouldMaskSensitiveFieldsWhenConditionMatches` | MaskMeOnInput condition masks correctly |
-| `shouldNotMaskWhenConditionDoesNotMatch` | Conditions only trigger with matching input |
-| `shouldMaskOnlyMatchingPhoneNumber` | Custom PhoneMaskingCondition works with DI |
-| `shouldAlwaysMaskFieldsOnDomainEntity` | AlwaysMaskMeCondition masks without input |
-| `shouldNotProcessExcludedField` | @ExcludeMaskMe prevents processing |
-| `shouldReplacePlaceholdersWithFieldValues` | Field referencing {fieldName} works |
-| `shouldUseCustomConverterWithHigherPriority` | Custom converters override defaults |
-| `shouldConvertMaskValuesToCorrectTypes` | Type conversion for Long, LocalDate, BigDecimal, Instant |
-| `shouldRecursivelyMaskNestedObjectFields` | Nested object masking works recursively |
+| Test                                            | What It Verifies                                         |
+|-------------------------------------------------|----------------------------------------------------------|
+| `shouldReturnOriginalUserData`                  | Unmasked data returns original values                    |
+| `shouldMaskSensitiveFieldsWhenConditionMatches` | MaskMeOnInput condition masks correctly                  |
+| `shouldNotMaskWhenConditionDoesNotMatch`        | Conditions only trigger with matching input              |
+| `shouldMaskOnlyMatchingPhoneNumber`             | Custom PhoneMaskingCondition works with DI               |
+| `shouldAlwaysMaskFieldsOnDomainEntity`          | AlwaysMaskMeCondition masks without input                |
+| `shouldNotProcessExcludedField`                 | @ExcludeMaskMe prevents processing                       |
+| `shouldReplacePlaceholdersWithFieldValues`      | Field referencing {fieldName} works                      |
+| `shouldUseCustomConverterWithHigherPriority`    | Custom converters override defaults                      |
+| `shouldConvertMaskValuesToCorrectTypes`         | Type conversion for Long, LocalDate, BigDecimal, Instant |
+| `shouldRecursivelyMaskNestedObjectFields`       | Nested object masking works recursively                  |
 
 ### Expected Test Output
 
