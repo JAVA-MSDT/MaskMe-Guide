@@ -14,7 +14,7 @@ import java.util.List;
  * Demonstrates various masking scenarios using the MaskMe library in pure Java.
  * <p>
  * This class provides methods that mirror typical REST controller operations
- * but outputs results to console instead of HTTP responses.
+ * but outputs results to the console instead of HTTP responses.
  * </p>
  *
  * <p><b>Supported Scenarios:</b></p>
@@ -47,7 +47,7 @@ public class UserMasking {
     /**
      * Retrieves and displays a user without any masking applied.
      * <p>
-     * This demonstrates the baseline - original data without modifications.
+     * This demonstrates the baseline-original data without modifications.
      * </p>
      *
      * @param id the user ID to retrieve
