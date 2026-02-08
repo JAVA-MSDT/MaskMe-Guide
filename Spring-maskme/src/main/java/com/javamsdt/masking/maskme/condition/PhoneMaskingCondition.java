@@ -83,7 +83,7 @@ public class PhoneMaskingCondition implements MaskMeCondition {
         boolean anyUserPhoneMatched = userService.findUsers().stream()
                 .anyMatch(user -> user.getPhone().equals(maskedFieldValue));
 
-        // It will return true for only specific phone number, the rest in the collections will not be masked.
+        // It will return true for only specific phone number, the rest of the collections will not be masked.
         return input != null
                 && input.equals(maskedFieldValue)
                 && anyUserPhoneMatched;

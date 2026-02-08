@@ -33,13 +33,13 @@ import java.util.logging.Level;
  * <p><b>Key Features:</b></p>
  * <ul>
  *   <li>Automatic Spring bean discovery for custom conditions</li>
- *   <li>@Bean methods for built-in conditions (required for pure Java library)</li>
+ *   <li>@Bean methods for built-in conditions (required for a pure Java library)</li>
  *   <li>Custom converter registration</li>
  *   <li>Lifecycle management with @PostConstruct and @PreDestroy</li>
  * </ul>
  *
  * <p><b>Usage:</b> This configuration is automatically picked up by Spring's
- * component scanning. No manual registration needed.</p>
+ * component scanning. No manual registration is needed.</p>
  *
  * @author Ahmed Samy
  * @since 1.0.0
