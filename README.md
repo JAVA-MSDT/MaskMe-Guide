@@ -344,7 +344,7 @@ delegates lifecycle management to frameworks (their job).
 ### 4. Memory Management
 
 - Use framework lifecycle hooks (@PreDestroy) to clear global converters
-- Clear request-scoped converters in finally blocks
+- Clear request-scoped converters in final blocks
 - Avoid memory leaks with proper ThreadLocal cleanup
 
 ### 5. Testing
