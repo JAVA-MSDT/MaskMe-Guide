@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaskMe - API Demo</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .user-cards { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); margin-top: 1rem; }
+
+        .user-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        }
+
+        .user-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, #e8f0fe, #f0f4ff);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .user-card-header .user-title { font-weight: 600; font-size: 1.05rem; }
+        .user-card-header .user-subtitle { font-size: .8rem; color: var(--text-secondary); }
+
+        .user-card-body { padding: 1rem 1.25rem; }
+
+        .field-row {
+            display: flex;
+            align-items: baseline;
+            padding: .4rem 0;
+            border-bottom: 1px solid #f1f3f4;
+            font-size: .88rem;
+            gap: .75rem;
+        }
+
+        .field-row:last-child { border-bottom: none; }
+
+        .field-label {
+            width: 110px;
+            flex-shrink: 0;
+            font-size: .75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--text-secondary);
+        }
+
+        .field-value {
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .masked {
+            background: #fef7e0;
+            color: #b06000;
+            padding: .1rem .45rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: .82rem;
+            border: 1px solid #f5e6b8;
+        }
+
+        .excluded {
+            background: #e6f4ea;
+            color: #0d904f;
+            padding: .1rem .45rem;
+            border-radius: 4px;
+            font-size: .82rem;
+            border: 1px solid #b7e1c7;
+        }
+
+        .nested-card {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .75rem 1rem;
+            margin-top: .25rem;
+        }
+
+        .nested-card .nested-title {
+            font-size: .75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--primary);
+            margin-bottom: .4rem;
+        }
+
+        .response-status {
+            margin-top: 1rem;
+            padding: .6rem 1rem;
+            border-radius: 6px;
+            font-size: .85rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .response-status.visible { display: block; }
+        .status-ok { background: #e6f4ea; color: var(--success); border: 1px solid #b7e1c7; }
+        .status-err { background: #fce8e6; color: var(--danger); border: 1px solid #f5c6c2; }
+        .status-loading { background: #e8f0fe; color: var(--primary); border: 1px solid #b8d4f5; }
+
+        .raw-toggle {
+            font-size: .75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: .5rem;
+            display: inline-block;
+        }
+
+        .raw-json {
+            display: none;
+            margin-top: .5rem;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: .78rem;
+            max-height: 300px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .raw-json.visible { display: block; }
+
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            padding: .75rem 1rem;
+            background: var(--code-bg);
+            border-radius: 6px;
+            font-size: .8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: .4rem; }
+        .legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
+
+        .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+        @media (max-width: 900px) { .side-by-side { grid-template-columns: 1fr; } }
+
+        .side-by-side .side-panel { min-width: 0; }
+
+        .side-panel-title {
+            font-size: .85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            padding: .5rem .75rem;
+            border-radius: 6px 6px 0 0;
+            text-align: center;
+        }
+
+        .side-panel-title.original { background: #e6f4ea; color: var(--success); }
+        .side-panel-title.masked-title { background: #fef7e0; color: #b06000; }
+
+        .side-by-side .user-card { border-radius: 0 0 10px 10px; }
+        .side-by-side .user-cards { grid-template-columns: 1fr; margin-top: 0; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="logo">🎭 MaskMe</a>
+    <a href="/">Overview</a>
+    <a href="/benchmarks.html">Benchmarks</a>
+    <a href="/api-demo.html" class="active">API Demo</a>
+</nav>
+
+<div class="container">
+
+    <div class="hero">
+        <h1>🔌 API Demo</h1>
+        <p>Try the MaskMe endpoints live — see how different masking conditions affect the response</p>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#fef7e0;border:1px solid #f5e6b8;"></div> Masked field</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#e6f4ea;border:1px solid #b7e1c7;"></div> Excluded (@ExcludeMaskMe)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#fff;border:1px solid var(--border);"></div> Original value</div>
+    </div>
+
+    <!-- Side-by-Side Comparison Section -->
+    <div class="endpoint-section">
+        <div class="endpoint-header" onclick="toggleSection('secCompare')">
+            <span class="badge badge-get">GET</span>
+            <code>/users/{id}</code> vs <code>/users/masked/{id}</code>
+            <span class="desc">🔍 Side-by-side — Original vs Masked</span>
+        </div>
+        <div class="endpoint-body" id="secCompare">
+            <p style="margin-bottom: 1rem; font-size: .9rem; color: var(--text-secondary);">
+                Compare the same user <strong>before and after</strong> masking. One click fetches both the
+                unmasked and masked versions side by side.
+            </p>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <select id="userIdCompare">
+                        <option value="1">1 — Ahmed Samy</option>
+                        <option value="2">2 — Maria Samy</option>
+                        <option value="3">3 — Male One</option>
+                        <option value="4">4 — Female One</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="callCompare('maskMe')">▶ Send Request</button>
+            <div class="response-status" id="statusCompare"></div>
+            <div class="side-by-side" id="compareContainer">
+                <div class="side-panel">
+                    <div class="side-panel-title original">📄 Original (No Masking)</div>
+                    <div class="user-cards" id="cardsCompareLeft"></div>
+                </div>
+                <div class="side-panel">
+                    <div class="side-panel-title masked-title">🎭 Masked (MaskMeOnInput)</div>
+                    <div class="user-cards" id="cardsCompareRight"></div>
+                </div>
+            </div>
+            <span class="raw-toggle" onclick="toggleRaw('rawCompare')">Show raw JSON</span>
+            <div class="raw-json" id="rawCompare"></div>
+        </div>
+    </div>
+
+    <!-- Endpoint 1: Get User by ID (No Masking) -->
+    <div class="endpoint-section">
+        <div class="endpoint-header" onclick="toggleSection('sec1')">
+            <span class="badge badge-get">GET</span>
+            <code>/users/{id}</code>
+            <span class="desc">Unmasked user — raw data, no masking applied</span>
+        </div>
+        <div class="endpoint-body" id="sec1">
+            <p style="margin-bottom: 1rem; font-size: .9rem; color: var(--text-secondary);">
+                Returns the original DTO without any masking. Use this as a baseline to compare with masked responses.
+            </p>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <select id="userId1">
+                        <option value="1">1 — Ahmed Samy</option>
+                        <option value="2">2 — Maria Samy</option>
+                        <option value="3">3 — Male One</option>
+                        <option value="4">4 — Female One</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="callGetUser()">▶ Send Request</button>
+            <div class="response-status" id="status1"></div>
+            <div class="user-cards" id="cards1"></div>
+            <span class="raw-toggle" onclick="toggleRaw('raw1')">Show raw JSON</span>
+            <div class="raw-json" id="raw1"></div>
+        </div>
+    </div>
+
+    <!-- Endpoint 2: Get Masked User by ID (MaskMeOnInput) -->
+    <div class="endpoint-section">
+        <div class="endpoint-header" onclick="toggleSection('sec2')">
+            <span class="badge badge-get">GET</span>
+            <code>/users/masked/{id}</code>
+            <span class="desc">Conditional masking — MaskMeOnInput condition</span>
+        </div>
+        <div class="endpoint-body" id="sec2">
+            <p style="margin-bottom: 1rem; font-size: .9rem; color: var(--text-secondary);">
+                Fields with <code>@MaskMe(conditions = {MaskMeOnInput.class})</code> are masked only when the
+                <code>Mask-Input</code> header equals <code>"maskMe"</code>. Try different values to see the difference.
+            </p>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <select id="userId2">
+                        <option value="1">1 — Ahmed Samy</option>
+                        <option value="2">2 — Maria Samy</option>
+                        <option value="3">3 — Male One</option>
+                        <option value="4">4 — Female One</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mask-Input Header</label>
+                    <input type="text" id="maskInput2" value="maskMe" placeholder="maskMe">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="callMaskedUser()">▶ Send Request</button>
+            <button class="btn btn-secondary" onclick="callMaskedUser('noMask')">▶ Send with "noMask"</button>
+            <div class="response-status" id="status2"></div>
+            <div class="user-cards" id="cards2"></div>
+            <span class="raw-toggle" onclick="toggleRaw('raw2')">Show raw JSON</span>
+            <div class="raw-json" id="raw2"></div>
+        </div>
+    </div>
+
+    <!-- Endpoint 3: Get User Entity (AlwaysMaskMeCondition on domain) -->
+    <div class="endpoint-section">
+        <div class="endpoint-header" onclick="toggleSection('sec3')">
+            <span class="badge badge-get">GET</span>
+            <code>/users/user/{id}</code>
+            <span class="desc">Domain entity — AlwaysMaskMeCondition applied</span>
+        </div>
+        <div class="endpoint-body" id="sec3">
+            <p style="margin-bottom: 1rem; font-size: .9rem; color: var(--text-secondary);">
+                Returns the <code>User</code> domain entity with <code>AlwaysMaskMeCondition</code> applied.
+                Fields like email, password, birthDate, and balance are always masked. The address is excluded via <code>@ExcludeMaskMe</code>.
+            </p>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <select id="userId3">
+                        <option value="1">1 — Ahmed Samy</option>
+                        <option value="2">2 — Maria Samy</option>
+                        <option value="3">3 — Male One</option>
+                        <option value="4">4 — Female One</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="callUserEntity()">▶ Send Request</button>
+            <div class="response-status" id="status3"></div>
+            <div class="user-cards" id="cards3"></div>
+            <span class="raw-toggle" onclick="toggleRaw('raw3')">Show raw JSON</span>
+            <div class="raw-json" id="raw3"></div>
+        </div>
+    </div>
+
+    <!-- Endpoint 4: Get All Users (Multiple Conditions) -->
+    <div class="endpoint-section">
+        <div class="endpoint-header" onclick="toggleSection('sec4')">
+            <span class="badge badge-get">GET</span>
+            <code>/users</code>
+            <span class="desc">All users — MaskMeOnInput + PhoneMaskingCondition</span>
+        </div>
+        <div class="endpoint-body" id="sec4">
+            <p style="margin-bottom: 1rem; font-size: .9rem; color: var(--text-secondary);">
+                Demonstrates <strong>multiple conditions</strong> on the same request. <code>MaskMeOnInput</code> masks
+                fields when header matches, and <code>PhoneMaskingCondition</code> masks only the specific phone number
+                provided in the <code>Mask-Phone</code> header.
+            </p>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>Mask-Input Header</label>
+                    <input type="text" id="maskInput4" value="maskMe" placeholder="maskMe">
+                </div>
+                <div class="form-group">
+                    <label>Mask-Phone Header</label>
+                    <select id="maskPhone4">
+                        <option value="01000000000">01000000000 (Ahmed)</option>
+                        <option value="01000000011">01000000011 (Maria)</option>
+                        <option value="01000000022">01000000022 (Male One)</option>
+                        <option value="01000000033">01000000033 (Female One)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="callAllUsers()">▶ Send Request</button>
+            <div class="response-status" id="status4"></div>
+            <div class="user-cards" id="cards4"></div>
+            <span class="raw-toggle" onclick="toggleRaw('raw4')">Show raw JSON</span>
+            <div class="raw-json" id="raw4"></div>
+        </div>
+    </div>
+
+    <!-- Masking Annotations Reference -->
+    <div class="card">
+        <h2>📝 Annotations Used in This Demo</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>DTO</th>
+                    <th>Condition</th>
+                    <th>Mask Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>id</td><td>UserDto</td><td>AlwaysMaskMeCondition</td><td><code>"1000"</code></td></tr>
+                <tr><td>name</td><td>UserDto</td><td>MaskMeOnInput</td><td><code>"{email}-{genderId}"</code></td></tr>
+                <tr><td>email</td><td>UserDto</td><td>AlwaysMaskMeCondition</td><td><code>""</code> (empty)</td></tr>
+                <tr><td>password</td><td>UserDto</td><td>AlwaysMaskMeCondition</td><td><code>"****"</code> (default)</td></tr>
+                <tr><td>phone</td><td>UserDto</td><td>PhoneMaskingCondition</td><td><code>"****"</code> (default)</td></tr>
+                <tr><td>birthDate</td><td>UserDto</td><td>AlwaysMaskMeCondition</td><td><code>"01/01/1800"</code></td></tr>
+                <tr><td>balance</td><td>UserDto</td><td>AlwaysMaskMeCondition</td><td><code>""</code> (empty → 0)</td></tr>
+                <tr><td>createdAt</td><td>UserDto</td><td>AlwaysMaskMeCondition</td><td><code>"1900-01-01T00:00:00.00Z"</code></td></tr>
+                <tr><td>city</td><td>AddressDto</td><td>AlwaysMaskMeCondition</td><td><code>"****"</code> (default)</td></tr>
+                <tr><td>zipCode</td><td>AddressDto</td><td>MaskMeOnInput</td><td><code>"[ZIP_MASKED]"</code></td></tr>
+                <tr><td>genderName</td><td>UserDto</td><td colspan="2"><code>@ExcludeMaskMe</code> — skipped entirely</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<footer>
+    MaskMe Library — <a href="https://github.com/JAVA-MSDT" target="_blank">GitHub</a> |
+    Built by Ahmed Samy
+</footer>
+
+<script>
+// Known masked fields per DTO for visual highlighting
+const MASKED_FIELDS_DTO = {
+    id: 'AlwaysMask', name: 'MaskMeOnInput', email: 'AlwaysMask',
+    password: 'AlwaysMask', phone: 'PhoneMasking', birthDate: 'AlwaysMask',
+    balance: 'AlwaysMask', createdAt: 'AlwaysMask'
+};
+const MASKED_FIELDS_ADDRESS_DTO = { city: 'AlwaysMask', zipCode: 'MaskMeOnInput' };
+const MASKED_FIELDS_GEO_DTO = { id: 'AlwaysMask', latitude: 'AlwaysMask' };
+const EXCLUDED_FIELDS_DTO = { genderName: true };
+
+const MASKED_FIELDS_DOMAIN = {
+    name: 'MaskMeOnInput', email: 'AlwaysMask', password: 'AlwaysMask',
+    birthDate: 'AlwaysMask', balance: 'AlwaysMask'
+};
+const MASKED_FIELDS_ADDRESS_DOMAIN = { street: 'AlwaysMask' };
+const EXCLUDED_FIELDS_DOMAIN = { address: true };
+
+const KNOWN_MASK_VALUES = ['****', '*****', '1000', '1800-01-01', '1900-01-01T00:00:00Z',
+    '00000000-0000-0000-0000-000000000000', '0', '0.0', '0.00', '[ZIP_MASKED]', '***-**-****'];
+
+function isMaskedValue(val) {
+    if (val === null || val === undefined) return false;
+    const s = String(val);
+    return KNOWN_MASK_VALUES.includes(s) || /^\*+$/.test(s) || s.includes('@masked') || s.includes('-MALE') || s.includes('-FEMALE');
+}
+
+function getInitials(name) {
+    if (!name || name === '****' || name === '*****') return '🎭';
+    return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+}
+
+function fieldHtml(label, value, maskedMap, excludedMap) {
+    let cls = '';
+    let suffix = '';
+    if (excludedMap && excludedMap[label]) {
+        cls = 'excluded';
+        suffix = ' 🛡️';
+    } else if (maskedMap && maskedMap[label] && isMaskedValue(value)) {
+        cls = 'masked';
+        suffix = ' 🎭';
+    }
+    const display = value === null || value === undefined ? '<em style="color:#999">null</em>' : escHtml(String(value));
+    return `<div class="field-row">
+        <span class="field-label">${escHtml(label)}</span>
+        <span class="field-value ${cls}">${display}${suffix}</span>
+    </div>`;
+}
+
+function nestedHtml(title, obj, maskedMap) {
+    if (!obj) return '';
+    let rows = '';
+    for (const [k, v] of Object.entries(obj)) {
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+            rows += nestedHtml(k, v, k === 'geoLocation' ? MASKED_FIELDS_GEO_DTO : {});
+        } else {
+            rows += fieldHtml(k, v, maskedMap, {});
+        }
+    }
+    return `<div class="nested-card"><div class="nested-title">${escHtml(title)}</div>${rows}</div>`;
+}
+
+function renderUserDtoCard(user) {
+    const fields = ['id','name','email','password','phone','birthDate','genderId','genderName','balance','createdAt'];
+    let body = '';
+    for (const f of fields) {
+        if (f === 'address' || f === 'genderName') continue;
+        body += fieldHtml(f, user[f], MASKED_FIELDS_DTO, EXCLUDED_FIELDS_DTO);
+    }
+    body += fieldHtml('genderName', user.genderName, {}, EXCLUDED_FIELDS_DTO);
+    if (user.address) {
+        let addrRows = '';
+        for (const [k, v] of Object.entries(user.address)) {
+            if (k === 'geoLocation') {
+                addrRows += nestedHtml('GeoLocation', v, MASKED_FIELDS_GEO_DTO);
+            } else {
+                addrRows += fieldHtml(k, v, MASKED_FIELDS_ADDRESS_DTO, {});
+            }
+        }
+        body += `<div class="nested-card"><div class="nested-title">📍 Address</div>${addrRows}</div>`;
+    }
+    const displayName = user.name || 'User';
+    return `<div class="user-card">
+        <div class="user-card-header">
+            <div class="user-avatar">${getInitials(displayName)}</div>
+            <div>
+                <div class="user-title">${escHtml(displayName)}</div>
+                <div class="user-subtitle">ID: ${escHtml(String(user.id))} · ${escHtml(user.email || '')}</div>
+            </div>
+        </div>
+        <div class="user-card-body">${body}</div>
+    </div>`;
+}
+
+function renderDomainUserCard(user) {
+    const fields = ['id','name','email','password','phone','birthDate','gender','balance','createdAt'];
+    let body = '';
+    for (const f of fields) {
+        if (f === 'address') continue;
+        const val = (f === 'gender' && user.gender) ? (typeof user.gender === 'string' ? user.gender : user.gender) : user[f];
+        body += fieldHtml(f, val, MASKED_FIELDS_DOMAIN, EXCLUDED_FIELDS_DOMAIN);
+    }
+    if (user.address) {
+        let addrRows = '';
+        for (const [k, v] of Object.entries(user.address)) {
+            if (k === 'geoLocation') {
+                addrRows += nestedHtml('GeoLocation', v, {});
+            } else {
+                addrRows += fieldHtml(k, v, MASKED_FIELDS_ADDRESS_DOMAIN, {});
+            }
+        }
+        body += `<div class="nested-card">
+            <div class="nested-title">📍 Address <span class="excluded" style="font-size:.7rem;">@ExcludeMaskMe</span></div>
+            ${addrRows}
+        </div>`;
+    }
+    const displayName = user.name || 'User';
+    return `<div class="user-card">
+        <div class="user-card-header">
+            <div class="user-avatar">${getInitials(displayName)}</div>
+            <div>
+                <div class="user-title">${escHtml(displayName)}</div>
+                <div class="user-subtitle">ID: ${escHtml(String(user.id))} · Domain Entity</div>
+            </div>
+        </div>
+        <div class="user-card-body">${body}</div>
+    </div>`;
+}
+
+function escHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+function toggleSection(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : (el.style.display === '' ? 'none' : 'block');
+}
+
+function toggleRaw(id) {
+    document.getElementById(id).classList.toggle('visible');
+}
+
+function setStatus(id, type, msg) {
+    const el = document.getElementById(id);
+    el.className = `response-status visible status-${type}`;
+    el.textContent = msg;
+}
+
+async function callEndpoint(url, headers, cardsId, statusId, rawId, renderFn) {
+    const cardsEl = document.getElementById(cardsId);
+    const rawEl = document.getElementById(rawId);
+    cardsEl.innerHTML = '';
+    rawEl.textContent = '';
+    rawEl.classList.remove('visible');
+    setStatus(statusId, 'loading', '⏳ Loading...');
+
+    try {
+        const res = await fetch(url, { headers });
+        if (!res.ok) {
+            const text = await res.text();
+            setStatus(statusId, 'err', `❌ ${res.status} ${res.statusText}`);
+            rawEl.textContent = text;
+            rawEl.classList.add('visible');
+            return;
+        }
+        const json = await res.json();
+        rawEl.textContent = JSON.stringify(json, null, 2);
+        setStatus(statusId, 'ok', `✅ ${res.status} OK — ${Array.isArray(json) ? json.length + ' users' : '1 user'} returned`);
+
+        const items = Array.isArray(json) ? json : [json];
+        cardsEl.innerHTML = items.map(renderFn).join('');
+    } catch (e) {
+        setStatus(statusId, 'err', `❌ Error: ${e.message}`);
+    }
+}
+
+async function callCompare(maskInput) {
+    const id = document.getElementById('userIdCompare').value;
+    const leftEl = document.getElementById('cardsCompareLeft');
+    const rightEl = document.getElementById('cardsCompareRight');
+    const rawEl = document.getElementById('rawCompare');
+    leftEl.innerHTML = '';
+    rightEl.innerHTML = '';
+    rawEl.textContent = '';
+    rawEl.classList.remove('visible');
+    setStatus('statusCompare', 'loading', '⏳ Loading both responses...');
+
+    try {
+        const [origRes, maskedRes] = await Promise.all([
+            fetch(`/users/${id}`),
+            fetch(`/users/masked/${id}`, { headers: { 'Mask-Input': maskInput } })
+        ]);
+
+        if (!origRes.ok || !maskedRes.ok) {
+            setStatus('statusCompare', 'err', `❌ Error: Original=${origRes.status}, Masked=${maskedRes.status}`);
+            return;
+        }
+
+        const origJson = await origRes.json();
+        const maskedJson = await maskedRes.json();
+
+        leftEl.innerHTML = renderUserDtoCard(origJson);
+        rightEl.innerHTML = renderUserDtoCard(maskedJson);
+
+        rawEl.textContent = `// Original\n${JSON.stringify(origJson, null, 2)}\n\n// Masked (Mask-Input: ${maskInput})\n${JSON.stringify(maskedJson, null, 2)}`;
+        setStatus('statusCompare', 'ok', `✅ Both loaded — compare Original vs Masked (Mask-Input: "${maskInput}")`);
+    } catch (e) {
+        setStatus('statusCompare', 'err', `❌ Error: ${e.message}`);
+    }
+}
+
+function callGetUser() {
+    const id = document.getElementById('userId1').value;
+    callEndpoint(`/users/${id}`, {}, 'cards1', 'status1', 'raw1', renderUserDtoCard);
+}
+
+function callMaskedUser(overrideInput) {
+    const id = document.getElementById('userId2').value;
+    const maskInput = overrideInput || document.getElementById('maskInput2').value;
+    callEndpoint(`/users/masked/${id}`, { 'Mask-Input': maskInput }, 'cards2', 'status2', 'raw2', renderUserDtoCard);
+}
+
+function callUserEntity() {
+    const id = document.getElementById('userId3').value;
+    callEndpoint(`/users/user/${id}`, {}, 'cards3', 'status3', 'raw3', renderDomainUserCard);
+}
+
+function callAllUsers() {
+    const maskInput = document.getElementById('maskInput4').value;
+    const maskPhone = document.getElementById('maskPhone4').value;
+    callEndpoint('/users', { 'Mask-Input': maskInput, 'Mask-Phone': maskPhone }, 'cards4', 'status4', 'raw4', renderUserDtoCard);
+}
+</script>
+
+</body>
+</html>

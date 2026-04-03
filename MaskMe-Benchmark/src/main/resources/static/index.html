@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaskMe Library - Demo</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav>
+    <a href="/" class="logo">🎭 MaskMe</a>
+    <a href="/" class="active">Overview</a>
+    <a href="/benchmarks.html">Benchmarks</a>
+    <a href="/api-demo.html">API Demo</a>
+</nav>
+
+<div class="container">
+
+    <div class="hero">
+        <h1>🎭 MaskMe Library</h1>
+        <p>A framework-agnostic, annotation-driven data masking library for Java. Protect sensitive data with zero boilerplate.</p>
+    </div>
+
+    <!-- Key Stats -->
+    <div class="grid grid-3">
+        <div class="stat-card">
+            <div class="value">~0.08ms</div>
+            <div class="label">Masking Overhead (11 fields + nested)</div>
+            <div class="impact impact-low">~0.007ms per field</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">15</div>
+            <div class="label">Fields Masked (UserDto + AddressDto)</div>
+            <div class="impact impact-low">11 + 4 fields</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">&lt;0.1%</div>
+            <div class="label">Real-World Request Impact</div>
+            <div class="impact impact-low">0.08ms in a 100ms request</div>
+        </div>
+    </div>
+
+    <!-- What is MaskMe -->
+    <div class="card">
+        <h2>📖 What is MaskMe?</h2>
+        <p style="margin-bottom: 1rem;">
+            MaskMe is a lightweight Java library that masks sensitive fields using annotations.
+            Instead of writing repetitive masking logic across your codebase, you annotate fields once
+            and let the library handle the rest — across any framework.
+        </p>
+        <div class="grid grid-2">
+            <div>
+                <h3 style="font-size: 1rem; margin-bottom: .5rem;">❌ Without MaskMe (Hardcoded)</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: .8rem; white-space: pre; overflow-x: auto;">public UserDto maskUser(UserDto user) {
+    return new UserDto(
+        1000L,
+        "****",
+        user.name() + "@masked.com",
+        "****",
+        "***-**-****",
+        maskAddress(user.address()),
+        LocalDate.of(1800, 1, 1),
+        user.genderId(),
+        user.genderName(),
+        BigDecimal.ZERO,
+        Instant.parse("1900-01-01T00:00:00Z")
+    );
+    // Repeat for EVERY DTO...
+}</div>
+            </div>
+            <div>
+                <h3 style="font-size: 1rem; margin-bottom: .5rem;">✅ With MaskMe (Annotation-Driven)</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: .8rem; white-space: pre; overflow-x: auto;">public record UserDto(
+    @MaskMe(conditions = {AlwaysMask.class},
+            maskValue = "1000")
+    Long id,
+
+    @MaskMe(conditions = {MaskMeOnInput.class},
+            maskValue = "{email}-{genderId}")
+    String name,
+
+    @MaskMe(conditions = {AlwaysMask.class})
+    String password
+    // ... annotate once, done!
+) {}
+
+// Usage: MaskMeInitializer.mask(dto);</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Features -->
+    <div class="card">
+        <h2>🚀 Key Features</h2>
+        <div class="grid grid-2">
+            <ul class="feature-list">
+                <li>Framework-agnostic — works with Spring, Quarkus, or pure Java</li>
+                <li>Annotation-driven — <code>@MaskMe</code> on fields, done</li>
+                <li>Conditional masking — mask based on runtime input, roles, environment</li>
+                <li>Field references — <code>{fieldName}</code> patterns in mask values</li>
+                <li>Nested object support — recursive masking through object graphs</li>
+            </ul>
+            <ul class="feature-list">
+                <li>Custom converters — override masking for any type</li>
+                <li>Scoped converter registry — global, thread-local, request-scoped</li>
+                <li>Thread-safe — ThreadLocal-based condition inputs</li>
+                <li>Multiple conditions per field — OR logic evaluation</li>
+                <li>Zero framework dependencies in core</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Architecture Overview -->
+    <div class="card">
+        <h2>🏛️ How It Works</h2>
+        <div style="background: var(--code-bg); padding: 1.25rem; border-radius: 8px; font-family: monospace; font-size: .85rem; line-height: 1.8; overflow-x: auto;">
+            <div>1. <strong>Annotate</strong> → Mark fields with <code>@MaskMe(conditions, maskValue)</code></div>
+            <div>2. <strong>Configure</strong> → Register framework provider &amp; custom converters at startup</div>
+            <div>3. <strong>Mask</strong> → Call <code>MaskMeInitializer.mask(dto, Condition.class, input)</code></div>
+            <div>4. <strong>Process</strong> → Library discovers fields → evaluates conditions → converts types → returns masked copy</div>
+        </div>
+    </div>
+
+    <!-- Built-in Conditions -->
+    <div class="card">
+        <h2>🎯 Built-in Conditions</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Condition</th>
+                    <th>Behavior</th>
+                    <th>Input Required</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>AlwaysMaskMeCondition</code></td>
+                    <td>Always masks the field regardless of input</td>
+                    <td><span class="tag">None</span></td>
+                </tr>
+                <tr>
+                    <td><code>MaskMeOnInput</code></td>
+                    <td>Masks only when input equals <code>"maskMe"</code></td>
+                    <td><span class="tag">String</span></td>
+                </tr>
+                <tr>
+                    <td><code>Custom Conditions</code></td>
+                    <td>Implement <code>MaskMeCondition</code> for any business logic</td>
+                    <td><span class="tag">Any Object</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Why MaskMe -->
+    <div class="card">
+        <h2>⚖️ Why MaskMe over Hardcoded?</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Aspect</th>
+                    <th>Hardcoded</th>
+                    <th>MaskMe</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Performance</td>
+                    <td>~100x faster (microbenchmark)</td>
+                    <td>~0.08ms per object (&lt;0.1% of real request)</td>
+                </tr>
+                <tr>
+                    <td>Maintainability</td>
+                    <td>Masking logic scattered everywhere</td>
+                    <td>Centralized via annotations</td>
+                </tr>
+                <tr>
+                    <td>Scalability</td>
+                    <td>New DTO = new masking method</td>
+                    <td>New DTO = just add annotations</td>
+                </tr>
+                <tr>
+                    <td>Conditional Logic</td>
+                    <td>Manual if/else chains</td>
+                    <td>Pluggable condition classes</td>
+                </tr>
+                <tr>
+                    <td>Framework Support</td>
+                    <td>Tied to one framework</td>
+                    <td>Spring, Quarkus, Pure Java</td>
+                </tr>
+                <tr>
+                    <td>Team Collaboration</td>
+                    <td>Hard to standardize</td>
+                    <td>Consistent annotation pattern</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<footer>
+    MaskMe Library — <a href="https://github.com/JAVA-MSDT" target="_blank">GitHub</a> |
+    Built by Ahmed Samy
+</footer>
+
+</body>
+</html>

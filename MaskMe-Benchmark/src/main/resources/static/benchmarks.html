@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaskMe - Benchmarks</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .bench-controls {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .bench-controls .form-group { margin-bottom: 0; flex: 0 0 160px; }
+        .bench-status {
+            padding: .6rem 1rem;
+            border-radius: 6px;
+            font-size: .85rem;
+            font-weight: 500;
+            display: none;
+            margin-bottom: 1rem;
+        }
+        .bench-status.visible { display: block; }
+        .bench-status.loading { background: #e8f0fe; color: var(--primary); border: 1px solid #b8d4f5; }
+        .bench-status.ok { background: #e6f4ea; color: var(--success); border: 1px solid #b7e1c7; }
+        .bench-status.err { background: #fce8e6; color: var(--danger); border: 1px solid #f5c6c2; }
+        .dynamic-content { display: none; }
+        .dynamic-content.visible { display: block; }
+        .progress-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .progress-bar.visible { display: block; }
+        .progress-bar .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+            animation: progress 8s ease-in-out forwards;
+        }
+        @keyframes progress { 0% { width: 0; } 80% { width: 85%; } 100% { width: 95%; } }
+        .scenario-tabs {
+            display: flex;
+            gap: .5rem;
+            margin-bottom: 1rem;
+        }
+        .scenario-tab {
+            padding: .4rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: .85rem;
+            cursor: pointer;
+            background: var(--code-bg);
+            transition: all .2s;
+        }
+        .scenario-tab:hover { background: #e8eaed; }
+        .scenario-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .scenario-panel { display: none; }
+        .scenario-panel.active { display: block; }
+
+        .callout {
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .callout::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: .06;
+            z-index: 0;
+        }
+        .callout > * { position: relative; z-index: 1; }
+        .callout-warning {
+            background: linear-gradient(135deg, #fff8e1, #fff3e0);
+            border: 2px solid #ffb74d;
+        }
+        .callout-warning::before { background: #ff9800; }
+        .callout h2 { margin-bottom: .75rem; font-size: 1.3rem; }
+        .callout-cols {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1.5rem;
+            align-items: center;
+            margin: 1.25rem 0;
+        }
+        @media (max-width: 700px) { .callout-cols { grid-template-columns: 1fr; } }
+        .callout-box {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.25rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        }
+        .callout-box .big-num {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .callout-box .big-label {
+            font-size: .8rem;
+            color: var(--text-secondary);
+            margin-top: .25rem;
+        }
+        .callout-box .big-sub {
+            font-size: .85rem;
+            margin-top: .5rem;
+            padding: .2rem .6rem;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .callout-vs {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .callout-bottom {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            font-size: .92rem;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="logo">🎭 MaskMe</a>
+    <a href="/">Overview</a>
+    <a href="/benchmarks.html" class="active">Benchmarks</a>
+    <a href="/api-demo.html">API Demo</a>
+</nav>
+
+<div class="container">
+
+    <div class="hero">
+        <h1>📊 Benchmark Results</h1>
+        <p>MaskMe Library vs Hardcoded Masking — Real performance comparison on 15 fields (11 UserDto + 4 AddressDto)</p>
+    </div>
+
+    <!-- ==================== KEY NARRATIVE CALLOUT ==================== -->
+    <div class="callout callout-warning">
+        <h2>⚠️ Don't Let the Microbenchmark Scare You</h2>
+        <p style="font-size: .95rem; color: var(--text-secondary); margin-bottom: .5rem;">
+            Microbenchmarks compare two near-zero values in isolation — the percentage looks dramatic, but the absolute difference is negligible in any real application.
+        </p>
+        <div class="callout-cols">
+            <div class="callout-box">
+                <div class="big-num" style="color: var(--danger);">+9,767%</div>
+                <div class="big-label">Microbenchmark Impact</div>
+                <div class="big-sub" style="background: #fce8e6; color: var(--danger);">0.0008ms → 0.08ms (isolated)</div>
+            </div>
+            <div class="callout-vs">vs</div>
+            <div class="callout-box">
+                <div class="big-num" style="color: var(--success);">+0.08%</div>
+                <div class="big-label">Real Application Impact</div>
+                <div class="big-sub" style="background: #e6f4ea; color: var(--success);">99.92ms → 100ms (full request)</div>
+            </div>
+        </div>
+        <div class="callout-bottom">
+            <div>🔬 <strong>Why the gap?</strong> The microbenchmark measures <em>only</em> the masking step. In a real request, masking is one of many steps (network, DB, auth, serialization, business logic) — and at 0.08ms it's <strong>less than 0.1%</strong> of total time.</div>
+            <div style="margin-top: .5rem;">📏 <strong>Per-field cost:</strong> ~0.007ms/field — competitive with Jackson (~0.01–0.05ms/field), better than Gson, Hibernate, and ModelMapper. If those libraries were unacceptable at this overhead, the Java ecosystem wouldn't use them.</div>
+            <div style="margin-top: .5rem;">✅ <strong>Bottom line:</strong> MaskMe is recommended for 99% of applications. The only exceptions are sub-10ms latency budgets or >10K req/sec hot paths — where hardcoded masking is the right choice.</div>
+        </div>
+    </div>
+
+    <!-- ==================== DYNAMIC BENCHMARK ==================== -->
+    <div class="card">
+        <h2>🔬 Live Benchmark — Run on Your Machine</h2>
+        <p style="margin-bottom: 1rem; font-size: .9rem; color: var(--text-secondary);">
+            Runs the same methodology as <code>UnifiedBenchmark.java</code>: warmup → GC pause → measure → statistical analysis.
+            Results reflect your actual hardware and JVM.
+        </p>
+        <div class="bench-controls">
+            <div class="form-group">
+                <label>Warmup Iterations</label>
+                <input type="number" id="warmup" value="5000" min="100" max="20000">
+            </div>
+            <div class="form-group">
+                <label>Measure Iterations</label>
+                <input type="number" id="iterations" value="50000" min="1000" max="200000">
+            </div>
+            <button class="btn btn-primary" onclick="runBenchmark()" id="runBtn">▶ Run Benchmark</button>
+        </div>
+        <div class="progress-bar" id="progressBar"><div class="progress-fill"></div></div>
+        <div class="bench-status" id="benchStatus"></div>
+    </div>
+
+    <!-- Dynamic Results (hidden until benchmark runs) -->
+    <div class="dynamic-content" id="dynamicResults">
+
+        <!-- Dynamic Environment -->
+        <div class="card">
+            <h2>🖥️ Test Environment</h2>
+            <div class="grid grid-3" id="dynEnvCards"></div>
+        </div>
+
+        <!-- Scenario Tabs -->
+        <div class="card">
+            <h2>⚖️ MaskMe vs Hardcoded — Live Results</h2>
+            <div class="scenario-tabs">
+                <div class="scenario-tab active" onclick="switchScenario('single')">Single Condition</div>
+                <div class="scenario-tab" onclick="switchScenario('multiple')">Multiple Conditions</div>
+            </div>
+            <div class="scenario-panel active" id="panel-single"></div>
+            <div class="scenario-panel" id="panel-multiple"></div>
+        </div>
+
+        <!-- Dynamic Detailed Table -->
+        <div class="card">
+            <h2>📋 Detailed Comparison</h2>
+            <div class="scenario-tabs">
+                <div class="scenario-tab active" onclick="switchTable('single')">Single Condition</div>
+                <div class="scenario-tab" onclick="switchTable('multiple')">Multiple Conditions</div>
+            </div>
+            <div class="scenario-panel active" id="table-single"></div>
+            <div class="scenario-panel" id="table-multiple"></div>
+        </div>
+
+        <!-- Dynamic Insights -->
+        <div class="card" id="dynInsights"></div>
+    </div>
+
+    <!-- ==================== REFERENCE RESULTS (from UnifiedBenchmark) ==================== -->
+    <div class="card" style="margin-top: 2rem; border-left: 4px solid var(--primary);">
+        <h2>📌 Reference Results (UnifiedBenchmark — 10K warmup + 100K iterations)</h2>
+        <p style="margin-bottom: 1rem; font-size: .85rem; color: var(--text-secondary);">
+            Results from running <code>UnifiedBenchmark.java</code> — aarch64, JVM 21.0.9, 6144MB RAM, 11 fields (UserDto) + 4 fields (AddressDto).
+            Run the live benchmark above to compare on your machine.
+        </p>
+
+        <h3 style="font-size: .95rem; margin: 1rem 0 .5rem;">Single Condition</h3>
+        <table>
+            <thead>
+                <tr><th>Metric</th><th>Hardcoded</th><th>MaskMe</th><th>Impact</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Avg Time</td><td>0.0008ms</td><td>0.0806ms</td><td><span class="impact impact-high">+9,767%</span></td></tr>
+                <tr><td>95th Percentile</td><td>0.0016ms</td><td>0.0917ms</td><td><span class="impact impact-high">+5,544%</span></td></tr>
+                <tr><td>Memory per Op</td><td>0.73 KB</td><td>0.30 KB</td><td><span class="impact impact-low">-59%</span></td></tr>
+                <tr><td>CPU Usage</td><td>99.1%</td><td>98.9%</td><td><span class="impact impact-low">~0%</span></td></tr>
+                <tr><td>GC Collections</td><td>4</td><td>70</td><td><span class="impact impact-high">+1,650%</span></td></tr>
+            </tbody>
+        </table>
+
+        <h3 style="font-size: .95rem; margin: 1.5rem 0 .5rem;">Multiple Conditions</h3>
+        <table>
+            <thead>
+                <tr><th>Metric</th><th>Hardcoded</th><th>MaskMe</th><th>Impact</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Avg Time</td><td>0.0004ms</td><td>0.0812ms</td><td><span class="impact impact-high">+18,891%</span></td></tr>
+                <tr><td>95th Percentile</td><td>0.0008ms</td><td>0.0903ms</td><td><span class="impact impact-high">+11,944%</span></td></tr>
+                <tr><td>Memory per Op</td><td>0.51 KB</td><td>0.26 KB</td><td><span class="impact impact-low">-49%</span></td></tr>
+                <tr><td>CPU Usage</td><td>95.0%</td><td>98.9%</td><td><span class="impact impact-low">+4%</span></td></tr>
+                <tr><td>GC Collections</td><td>4</td><td>71</td><td><span class="impact impact-high">+1,675%</span></td></tr>
+            </tbody>
+        </table>
+
+        <h3 style="font-size: .95rem; margin: 1.5rem 0 .5rem;">Batch &amp; Concurrent</h3>
+        <table>
+            <thead>
+                <tr><th>Scenario</th><th>Hardcoded</th><th>MaskMe</th><th>Impact</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Batch (1000 users) — Avg Time</td><td>0.0004ms</td><td>0.0815ms</td><td><span class="impact impact-high">+19,590%</span></td></tr>
+                <tr><td>Batch — Throughput</td><td>2,415,704 ops/s</td><td>12,269 ops/s</td><td><span class="impact impact-high">-99.5%</span></td></tr>
+                <tr><td>Concurrent (10 threads) — Total</td><td>1ms</td><td>388ms</td><td><span class="impact impact-high">+38,700%</span></td></tr>
+                <tr><td>Concurrent — Throughput</td><td>10,000,000 ops/s</td><td>25,773 ops/s</td><td><span class="impact impact-high">-99.7%</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ==================== BENCHMARK METHODOLOGY ==================== -->
+    <div class="card">
+        <h2>🧪 Benchmark Methodology — How We Measured</h2>
+        <p style="margin-bottom: 1.25rem; font-size: .9rem; color: var(--text-secondary);">
+            This benchmark follows <strong>JMH-style methodology</strong> (the OpenJDK standard for Java microbenchmarks).
+            Here's what the code does and how it aligns with community best practices.
+        </p>
+
+        <h3 style="font-size: .95rem; margin: 1rem 0 .5rem;">🟢 What We Do Right (JMH-Aligned)</h3>
+        <table>
+            <thead>
+                <tr><th>Practice</th><th>Our Implementation</th><th>JMH Equivalent</th><th>Why It Matters</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Warmup phase</td>
+                    <td>10,000 iterations before measurement</td>
+                    <td><code>@Warmup(iterations=5)</code></td>
+                    <td>Allows JIT (C1/C2 compiler) to optimize hot paths. Without warmup, the first runs include compilation overhead, skewing results.</td>
+                </tr>
+                <tr>
+                    <td>GC stabilization</td>
+                    <td><code>System.gc()</code> + <code>Thread.sleep(100ms)</code> between warmup and measurement</td>
+                    <td>Fork isolation achieves similar</td>
+                    <td>Clears garbage from warmup phase so GC pressure during measurement reflects only the measured code.</td>
+                </tr>
+                <tr>
+                    <td>Per-sample timing</td>
+                    <td><code>System.nanoTime()</code> per iteration, stored in pre-allocated <code>ArrayList</code></td>
+                    <td><code>@BenchmarkMode(SampleTime)</code></td>
+                    <td>Enables percentile analysis (p95, p99). Pre-allocation avoids ArrayList resize during measurement.</td>
+                </tr>
+                <tr>
+                    <td>Percentile calculation</td>
+                    <td>Sort samples, pick index at 95%/99%</td>
+                    <td>JMH's built-in percentile reporting</td>
+                    <td>p95/p99 reveal tail latency — more meaningful than averages for production SLAs.</td>
+                </tr>
+                <tr>
+                    <td>Multi-dimensional metrics</td>
+                    <td>Time, memory, CPU (<code>ThreadMXBean</code>), GC (<code>GarbageCollectorMXBean</code>), throughput</td>
+                    <td><code>@BenchmarkMode</code> + profilers</td>
+                    <td>A single metric (e.g., time) can be misleading. Measuring 5+ dimensions gives a complete picture.</td>
+                </tr>
+                <tr>
+                    <td>High iteration count</td>
+                    <td>100,000 measurement iterations</td>
+                    <td>Configurable via <code>@Measurement</code></td>
+                    <td>Reduces noise from OS scheduling, background processes, and timer granularity. More samples = more statistical significance.</td>
+                </tr>
+                <tr>
+                    <td>Same data, same conditions</td>
+                    <td>Both approaches benchmark the exact same DTO (11 + 4 fields)</td>
+                    <td><code>@State(Scope.Benchmark)</code></td>
+                    <td>Ensures the comparison is fair — same object graph, same field count, same values.</td>
+                </tr>
+                <tr>
+                    <td>Multiple scenarios</td>
+                    <td>Single condition, multiple conditions, batch, concurrent</td>
+                    <td><code>@Param</code> variations</td>
+                    <td>Tests different real-world usage patterns, not just one happy path.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3 style="font-size: .95rem; margin: 1.5rem 0 .5rem;">🟡 Honest Limitations (vs Full JMH)</h3>
+        <table>
+            <thead>
+                <tr><th>Limitation</th><th>What JMH Does</th><th>Impact on Our Results</th><th>Mitigation</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>No fork isolation</td>
+                    <td>Runs each benchmark in a separate JVM fork</td>
+                    <td>JIT profile pollution — optimizations from the hardcoded run may affect the MaskMe run</td>
+                    <td>Hardcoded runs first (simpler code), so any JIT bias would <em>favor</em> MaskMe, making our comparison conservative</td>
+                </tr>
+                <tr>
+                    <td>No Blackhole</td>
+                    <td><code>Blackhole.consume()</code> prevents dead-code elimination</td>
+                    <td>JIT could theoretically optimize away unused return values</td>
+                    <td>Both MaskMe (reflection + object creation) and hardcoded (record construction) have side effects that prevent DCE in practice</td>
+                </tr>
+                <tr>
+                    <td>Timer overhead</td>
+                    <td>Batch timing avoids per-iteration <code>nanoTime()</code> calls</td>
+                    <td><code>System.nanoTime()</code> adds ~20–30ns per sample (~3% noise on the hardcoded path)</td>
+                    <td>Both approaches pay the same timer cost, so the <em>relative</em> comparison remains valid</td>
+                </tr>
+                <tr>
+                    <td>Single run</td>
+                    <td>5+ forks, averaged</td>
+                    <td>Results can vary by ±5–10% between runs due to OS scheduling, thermal throttling</td>
+                    <td>The Live Benchmark feature lets you run multiple times and compare. The 100x gap is consistent across runs.</td>
+                </tr>
+                <tr>
+                    <td>Memory approximation</td>
+                    <td>Allocation profilers (e.g., <code>-prof gc</code>)</td>
+                    <td><code>totalMemory() - freeMemory()</code> is a snapshot, not precise per-op allocation</td>
+                    <td>Useful for relative comparison (both measured the same way), not absolute allocation tracking</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3 style="font-size: .95rem; margin: 1.5rem 0 .5rem;">🎯 Verdict: Is This Benchmark Trustworthy?</h3>
+        <div style="background: var(--code-bg); padding: 1.25rem; border-radius: 8px; font-size: .9rem; line-height: 1.9;">
+            <div>✅ <strong>The relative comparison is reliable.</strong> Both approaches are measured with the same methodology, same data, same timer overhead. The ~100x gap is consistent and real.</div>
+            <div>✅ <strong>The methodology follows 6 of 8 JMH best practices</strong> — warmup, GC stabilization, per-sample timing, percentiles, multi-dimensional metrics, high iteration count.</div>
+            <div>⚠️ <strong>Absolute numbers may vary ±5–10%</strong> between runs (no fork isolation, single run). Use the Live Benchmark to verify on your machine.</div>
+            <div>⚠️ <strong>This is a microbenchmark.</strong> It measures isolated masking operations, not real application performance. See the Real-World Context section below for why the scary percentages don't translate to production impact.</div>
+        </div>
+        <p style="margin-top: 1rem; font-size: .8rem; color: var(--text-secondary); line-height: 1.7;">
+            <strong>References:</strong>
+            <a href="https://github.com/openjdk/jmh" target="_blank" style="color: var(--primary);">OpenJDK JMH</a> — the Java Microbenchmark Harness, the community standard for Java performance testing.
+            <a href="https://www.baeldung.com/java-microbenchmark-harness" target="_blank" style="color: var(--primary);">Baeldung JMH Guide</a> — practical introduction to JMH methodology.
+            <a href="https://shipilev.net/talks/" target="_blank" style="color: var(--primary);">Aleksey Shipilëv's talks</a> — JMH author's presentations on benchmarking pitfalls.
+        </p>
+    </div>
+
+    <!-- Real-World Context -->
+    <div class="card">
+        <h2>🌍 Real-World Context — Why the Numbers Are Misleading</h2>
+        <p style="margin-bottom: 1rem; font-size: .9rem; color: var(--text-secondary);">
+            The microbenchmark shows ~100x slower per operation. But in a real web request, masking is a tiny fraction of total time.
+        </p>
+        <div style="background: #1e1e1e; color: #d4d4d4; padding: 1.25rem; border-radius: 8px; font-family: monospace; font-size: .82rem; line-height: 1.8; overflow-x: auto; margin-bottom: 1rem;">Typical web request with MaskMe:
+
+Total Response Time: 100ms
+├─ Network latency:    20ms    (20%)
+├─ Load balancer:       5ms    (5%)
+├─ Authentication:     10ms    (10%)
+├─ Database query:     40ms    (40%)
+├─ Business logic:     15ms    (15%)
+├─ JSON serialization:  5ms    (5%)   ← Jackson: 10 fields
+└─ MaskMe masking:    0.08ms   (0.08%) ← 11 fields + nested</div>
+        <div style="background: var(--code-bg); padding: 1rem; border-radius: 8px; font-size: .9rem; line-height: 1.9;">
+            <div>📊 <strong>Per-field cost:</strong> ~0.007ms/field (0.08ms ÷ 11 fields) — competitive with Jackson (~0.01-0.05ms/field)</div>
+            <div>📊 <strong>Microbenchmark:</strong> Hardcoded 0.0008ms vs MaskMe 0.08ms → <strong>+9,767%</strong> ← scary but isolated</div>
+            <div>📊 <strong>Real application:</strong> Hardcoded 99.92ms vs MaskMe 100ms → <strong>+0.08%</strong> ← actual user impact</div>
+        </div>
+    </div>
+
+    <!-- Industry Comparison -->
+    <div class="card">
+        <h2>📏 Industry Comparison — Reflection-Based Library Overhead</h2>
+        <p style="margin-bottom: 1rem; font-size: .85rem; color: var(--text-secondary);">
+            Comparing MaskMe's per-field reflection cost against other Java libraries that perform per-field processing via reflection.
+            All numbers are from JMH-style microbenchmarks on ~10-field POJOs. Sources linked below.
+        </p>
+        <table>
+            <thead>
+                <tr><th>Library</th><th>Operation</th><th>Overhead</th><th>Per-Field Cost</th><th>Mechanism</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>MaskMe</strong></td><td>Mask 11 fields + nested</td><td><strong>0.08ms</strong></td><td><strong>~0.007ms</strong></td><td>Reflection</td></tr>
+                <tr><td>Jackson</td><td>Serialize 10-field POJO</td><td>0.1–0.3ms</td><td>~0.01–0.03ms</td><td>Reflection + codegen</td></tr>
+                <tr><td>Gson</td><td>Serialize 10-field POJO</td><td>0.2–0.6ms</td><td>~0.02–0.06ms</td><td>Reflection</td></tr>
+                <tr><td>Spring AOP</td><td>Single proxy invocation</td><td>0.05–0.1ms</td><td>N/A</td><td>CGLIB proxy</td></tr>
+                <tr><td>Bean Validation</td><td>Validate 5 @NotNull fields</td><td>0.1–0.2ms</td><td>~0.02–0.04ms</td><td>Reflection</td></tr>
+                <tr><td>ModelMapper</td><td>Map 10-field DTO</td><td>0.2–0.5ms</td><td>~0.02–0.05ms</td><td>Reflection</td></tr>
+                <tr><td>MapStruct</td><td>Map 10-field DTO</td><td>0.01–0.05ms</td><td>~0.001–0.005ms</td><td>Compile-time codegen</td></tr>
+            </tbody>
+        </table>
+        <p style="margin-top: 1rem; font-size: .8rem; color: var(--text-secondary); line-height: 1.7;">
+            <strong>Sources:</strong>
+            Jackson &amp; Gson numbers from <a href="https://github.com/fabienrenaud/java-json-benchmark" target="_blank" style="color: var(--primary);">fabienrenaud/java-json-benchmark</a> (JMH, 10-field POJOs).
+            Spring AOP from <a href="https://docs.spring.io/spring-framework/reference/core/aop.html" target="_blank" style="color: var(--primary);">Spring Framework docs</a> and community JMH benchmarks.
+            Bean Validation from <a href="https://hibernate.org/validator/" target="_blank" style="color: var(--primary);">Hibernate Validator</a> performance tests.
+            ModelMapper from <a href="https://github.com/modelmapper/modelmapper" target="_blank" style="color: var(--primary);">ModelMapper GitHub</a> community benchmarks.
+            MapStruct uses compile-time code generation (no reflection) — included for reference only, not a direct comparison.
+        </p>
+    </div>
+
+    <!-- Key Insights & Recommendation -->
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>💡 When to Use Which</h2>
+            <table>
+                <thead>
+                    <tr><th>Scenario</th><th>Recommendation</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Ultra-high perf (&lt;10ms budget)</td><td><span class="tag">Hardcoded</span></td></tr>
+                    <tr><td>Simple masking (1-3 fields)</td><td><span class="tag">Hardcoded</span></td></tr>
+                    <tr><td>&gt;10K req/sec hot paths</td><td><span class="tag">Hardcoded</span></td></tr>
+                    <tr><td>Complex conditional masking</td><td><span class="tag">MaskMe</span></td></tr>
+                    <tr><td>Multiple DTOs / endpoints</td><td><span class="tag">MaskMe</span></td></tr>
+                    <tr><td>Team collaboration</td><td><span class="tag">MaskMe</span></td></tr>
+                    <tr><td>Compliance / audit trail</td><td><span class="tag">MaskMe</span></td></tr>
+                    <tr><td>New development / microservices</td><td><span class="tag">MaskMe</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <h2>📊 The Trade-off</h2>
+            <div style="background: var(--code-bg); padding: 1rem; border-radius: 8px; font-size: .9rem; line-height: 1.9;">
+                <div>🔴 <strong>Microbenchmark:</strong> ~100x slower per isolated operation (0.0008ms → 0.08ms)</div>
+                <div>🟢 <strong>Real-world:</strong> &lt;0.1% of total request time (0.08ms in a 100ms request)</div>
+                <div>🟢 <strong>Per-field:</strong> ~0.007ms — competitive with Jackson, better than Gson/Hibernate</div>
+                <div>🟡 <strong>GC pressure:</strong> ~17x more collections — reflection creates more short-lived objects</div>
+                <div>🟢 <strong>Gains:</strong> Centralized logic, conditional masking, framework-agnostic, testable</div>
+                <div>🟢 <strong>Bottom line:</strong> For 99% of applications, maintainability wins outweigh the overhead</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    MaskMe Library — <a href="https://github.com/JAVA-MSDT" target="_blank">GitHub</a> |
+    Built by Ahmed Samy
+</footer>
+
+<script>
+function fmt(val, unit) {
+    if (val === undefined || val === null) return 'N/A';
+    if (unit === 'KB') return (val / 1024).toFixed(2) + ' KB';
+    if (unit === 'bytes') return val.toLocaleString() + ' B';
+    if (unit === 'ops/s') return Math.round(val).toLocaleString() + ' ops/s';
+    if (unit === '%') return val.toFixed(2) + '%';
+    if (unit === '') return val;
+    return val.toFixed(4) + (unit ? ' ' + unit : '');
+}
+
+function impact(hardcoded, maskme) {
+    if (!hardcoded || hardcoded === 0) return { pct: 0, text: 'N/A', cls: 'impact-low' };
+    const pct = ((maskme - hardcoded) / hardcoded) * 100;
+    const cls = Math.abs(pct) < 25 ? 'impact-low' : Math.abs(pct) < 80 ? 'impact-med' : 'impact-high';
+    const sign = pct > 0 ? '+' : '';
+    return { pct, text: sign + pct.toFixed(1) + '%', cls };
+}
+
+function barWidth(val, max) {
+    if (!max || max === 0) return 5;
+    return Math.max(5, Math.min(100, (val / max) * 100));
+}
+
+function renderBars(panelId, h, m) {
+    const metrics = [
+        { label: 'Avg Time', hVal: h.avgTimeMs, mVal: m.avgTimeMs, unit: 'ms' },
+        { label: '95th Percentile', hVal: h.p95Ms, mVal: m.p95Ms, unit: 'ms' },
+        { label: '99th Percentile', hVal: h.p99Ms, mVal: m.p99Ms, unit: 'ms' },
+        { label: 'Memory per Op', hVal: h.memoryPerOpBytes, mVal: m.memoryPerOpBytes, unit: 'bytes' },
+        { label: 'CPU Usage', hVal: h.cpuPercent, mVal: m.cpuPercent, unit: '%' },
+        { label: 'GC Collections', hVal: h.gcCollections, mVal: m.gcCollections, unit: '' },
+    ];
+
+    let html = '';
+    for (const row of metrics) {
+        const max = Math.max(row.hVal, row.mVal);
+        const imp = impact(row.hVal, row.mVal);
+        const hDisplay = row.unit === 'bytes' ? fmt(row.hVal, 'KB') : fmt(row.hVal, row.unit);
+        const mDisplay = row.unit === 'bytes' ? fmt(row.mVal, 'KB') : fmt(row.mVal, row.unit);
+        html += `<div class="comparison-row">
+            <div class="comparison-label">${row.label}</div>
+            <div class="comparison-bar">
+                <div class="fill fill-hardcoded" style="width:${barWidth(row.hVal, max)}%">Hardcoded: ${hDisplay}</div>
+            </div>
+            <div class="comparison-bar">
+                <div class="fill fill-maskme" style="width:${barWidth(row.mVal, max)}%">MaskMe: ${mDisplay}</div>
+            </div>
+            <span class="impact ${imp.cls}" style="flex-shrink:0;">${imp.text}</span>
+        </div>`;
+    }
+    document.getElementById(panelId).innerHTML = html;
+}
+
+function renderTable(panelId, h, m) {
+    const rows = [
+        { metric: 'Avg Time (ms)', h: fmt(h.avgTimeMs, 'ms'), m: fmt(m.avgTimeMs, 'ms'), imp: impact(h.avgTimeMs, m.avgTimeMs) },
+        { metric: '95th Percentile (ms)', h: fmt(h.p95Ms, 'ms'), m: fmt(m.p95Ms, 'ms'), imp: impact(h.p95Ms, m.p95Ms) },
+        { metric: '99th Percentile (ms)', h: fmt(h.p99Ms, 'ms'), m: fmt(m.p99Ms, 'ms'), imp: impact(h.p99Ms, m.p99Ms) },
+        { metric: 'Memory per Op', h: fmt(h.memoryPerOpBytes, 'KB'), m: fmt(m.memoryPerOpBytes, 'KB'), imp: impact(h.memoryPerOpBytes, m.memoryPerOpBytes) },
+        { metric: 'CPU Usage', h: fmt(h.cpuPercent, '%'), m: fmt(m.cpuPercent, '%'), imp: impact(h.cpuPercent, m.cpuPercent) },
+        { metric: 'GC Collections', h: h.gcCollections, m: m.gcCollections, imp: impact(h.gcCollections, m.gcCollections) },
+        { metric: 'Throughput', h: fmt(h.throughput, 'ops/s'), m: fmt(m.throughput, 'ops/s'), imp: impact(m.throughput, h.throughput) },
+    ];
+
+    let html = `<table><thead><tr><th>Metric</th><th>Hardcoded</th><th>MaskMe</th><th>Impact</th></tr></thead><tbody>`;
+    for (const r of rows) {
+        html += `<tr><td>${r.metric}</td><td>${r.h}</td><td>${r.m}</td><td><span class="impact ${r.imp.cls}">${r.imp.text}</span></td></tr>`;
+    }
+    html += '</tbody></table>';
+    document.getElementById(panelId).innerHTML = html;
+}
+
+function renderInsights(data) {
+    const hs = data.hardcoded.single;
+    const ms = data.maskme.single;
+    const diff = (ms.avgTimeMs - hs.avgTimeMs).toFixed(4);
+    const memImp = impact(hs.memoryPerOpBytes, ms.memoryPerOpBytes);
+    const cpuImp = impact(hs.cpuPercent, ms.cpuPercent);
+
+    document.getElementById('dynInsights').innerHTML = `
+        <h2>🎯 Live Insights</h2>
+        <ul class="feature-list">
+            <li>MaskMe adds <strong>${diff}ms</strong> overhead per masking operation (single condition)</li>
+            <li>Memory impact: <strong>${memImp.text}</strong> — due to reflection-based object creation</li>
+            <li>CPU impact: <strong>${cpuImp.text}</strong></li>
+            <li>95th percentile: Hardcoded ${fmt(hs.p95Ms, 'ms')} vs MaskMe ${fmt(ms.p95Ms, 'ms')}</li>
+            <li>Throughput: Hardcoded ${fmt(hs.throughput, 'ops/s')} vs MaskMe ${fmt(ms.throughput, 'ops/s')}</li>
+        </ul>`;
+}
+
+function switchScenario(name) {
+    document.querySelectorAll('.scenario-tabs:nth-of-type(1)').forEach(tabs => {
+        // handled by click
+    });
+    const card = document.getElementById('panel-single').parentElement;
+    card.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+    card.querySelectorAll('.scenario-panel').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+}
+
+function switchTable(name) {
+    const card = document.getElementById('table-single').parentElement;
+    card.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+    card.querySelectorAll('.scenario-panel').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('table-' + name).classList.add('active');
+}
+
+function setStatus(type, msg) {
+    const el = document.getElementById('benchStatus');
+    el.className = 'bench-status visible ' + type;
+    el.textContent = msg;
+}
+
+async function runBenchmark() {
+    const warmup = document.getElementById('warmup').value;
+    const iterations = document.getElementById('iterations').value;
+    const btn = document.getElementById('runBtn');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Running...';
+    document.getElementById('dynamicResults').classList.remove('visible');
+
+    const bar = document.getElementById('progressBar');
+    bar.classList.add('visible');
+    bar.innerHTML = '<div class="progress-fill"></div>';
+
+    setStatus('loading', `⏳ Running benchmark: ${warmup} warmup + ${iterations} measure iterations × 2 scenarios × 2 approaches... This may take a moment.`);
+
+    try {
+        const res = await fetch(`/benchmark?warmup=${warmup}&iterations=${iterations}`);
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        const data = await res.json();
+
+        // Render environment
+        const env = data.environment;
+        document.getElementById('dynEnvCards').innerHTML = `
+            <div class="stat-card"><div class="value" style="font-size:1.5rem">JVM ${env.jvm}</div><div class="label">Java Version</div></div>
+            <div class="stat-card"><div class="value" style="font-size:1.5rem">${env.maxMemoryMB} MB</div><div class="label">Max Memory</div></div>
+            <div class="stat-card"><div class="value" style="font-size:1.5rem">${Number(env.iterations).toLocaleString()}</div><div class="label">Measure Iterations</div></div>
+        `;
+
+        // Render bars
+        renderBars('panel-single', data.hardcoded.single, data.maskme.single);
+        renderBars('panel-multiple', data.hardcoded.multiple, data.maskme.multiple);
+
+        // Render tables
+        renderTable('table-single', data.hardcoded.single, data.maskme.single);
+        renderTable('table-multiple', data.hardcoded.multiple, data.maskme.multiple);
+
+        // Render insights
+        renderInsights(data);
+
+        document.getElementById('dynamicResults').classList.add('visible');
+        setStatus('ok', `✅ Benchmark completed — ${env.warmup} warmup + ${env.iterations} iterations | ${env.arch} | ${env.scale}`);
+    } catch (e) {
+        setStatus('err', `❌ Benchmark failed: ${e.message}`);
+    } finally {
+        bar.classList.remove('visible');
+        btn.disabled = false;
+        btn.textContent = '▶ Run Benchmark';
+    }
+}
+</script>
+
+</body>
+</html>
