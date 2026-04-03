@@ -19,6 +19,7 @@ public class UnifiedBenchmark {
 
     private static final int WARMUP = 10000;
     private static final int ITERATIONS = 100000;
+    private static final int RUNS = 3;
     private static final int BATCH_SIZE = 1000;
     private static final int CONCURRENT_THREADS = 10;
     private static final int CONCURRENT_OPS = 1000;
@@ -33,8 +34,9 @@ public class UnifiedBenchmark {
         System.out.println("This benchmark uses JMH-style methodology:");
         System.out.println("  1. Warmup Phase: " + WARMUP + " iterations - JIT compilation & optimization");
         System.out.println("  2. GC Pause: 100ms - Stabilize memory state");
-        System.out.println("  3. Measure Phase: " + ITERATIONS + " iterations - Collect performance data");
-        System.out.println("  4. Statistical Analysis: Calculate percentiles, averages, resource usage\n");
+        System.out.println("  3. Measure Phase: " + RUNS + " runs × " + ITERATIONS + " iterations - Collect performance data");
+        System.out.println("  4. Multi-Run Averaging: Results averaged across " + RUNS + " runs to reduce variance");
+        System.out.println("  5. Statistical Analysis: Calculate percentiles, averages, resource usage\n");
         
         System.out.println("### Metrics Explained\n");
         System.out.println("  • Avg Time: Mean execution time per single masking operation");
@@ -115,36 +117,43 @@ public class UnifiedBenchmark {
         for (int i = 0; i < WARMUP; i++) task.run();
         System.gc();
         try { Thread.sleep(100); } catch (Exception e) {}
-        
-        System.gc();
-        Runtime runtime = Runtime.getRuntime();
-        long memBefore = runtime.totalMemory() - runtime.freeMemory();
-        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        long cpuBefore = threadMXBean.getCurrentThreadCpuTime();
-        List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
-        long gcBefore = gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionCount).sum();
-        
-        List<Long> samples = new ArrayList<>(ITERATIONS);
-        long start = System.nanoTime();
-        for (int i = 0; i < ITERATIONS; i++) {
-            long s = System.nanoTime();
-            task.run();
-            samples.add(System.nanoTime() - s);
+
+        Metric avg = new Metric();
+        for (int run = 0; run < RUNS; run++) {
+            System.gc();
+            Runtime runtime = Runtime.getRuntime();
+            long memBefore = runtime.totalMemory() - runtime.freeMemory();
+            ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+            long cpuBefore = threadMXBean.getCurrentThreadCpuTime();
+            List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
+            long gcBefore = gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionCount).sum();
+
+            List<Long> samples = new ArrayList<>(ITERATIONS);
+            long start = System.nanoTime();
+            for (int i = 0; i < ITERATIONS; i++) {
+                long s = System.nanoTime();
+                task.run();
+                samples.add(System.nanoTime() - s);
+            }
+            long end = System.nanoTime();
+
+            long memAfter = runtime.totalMemory() - runtime.freeMemory();
+            long cpuAfter = threadMXBean.getCurrentThreadCpuTime();
+            long gcAfter = gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionCount).sum();
+
+            Collections.sort(samples);
+            avg.avgTime += (end - start) / NS_TO_MS / ITERATIONS;
+            avg.p95 += samples.get((int)(samples.size() * 0.95)) / NS_TO_MS;
+            avg.memory += Math.max(0, (memAfter - memBefore) / ITERATIONS);
+            avg.cpu += ((cpuAfter - cpuBefore) / NS_TO_MS) / ((end - start) / NS_TO_MS) * 100;
+            avg.gc += gcAfter - gcBefore;
         }
-        long end = System.nanoTime();
-        
-        long memAfter = runtime.totalMemory() - runtime.freeMemory();
-        long cpuAfter = threadMXBean.getCurrentThreadCpuTime();
-        long gcAfter = gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionCount).sum();
-        
-        Collections.sort(samples);
-        Metric m = new Metric();
-        m.avgTime = (end - start) / NS_TO_MS / ITERATIONS;
-        m.p95 = samples.get((int)(samples.size() * 0.95)) / NS_TO_MS;
-        m.memory = Math.max(0, (memAfter - memBefore) / ITERATIONS);
-        m.cpu = ((cpuAfter - cpuBefore) / NS_TO_MS) / ((end - start) / NS_TO_MS) * 100;
-        m.gc = gcAfter - gcBefore;
-        return m;
+        avg.avgTime /= RUNS;
+        avg.p95 /= RUNS;
+        avg.memory /= RUNS;
+        avg.cpu /= RUNS;
+        avg.gc /= RUNS;
+        return avg;
     }
 
     private static Metric benchmarkBatch(Runnable task) {

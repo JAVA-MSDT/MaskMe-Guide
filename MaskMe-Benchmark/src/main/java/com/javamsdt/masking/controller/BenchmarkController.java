@@ -30,6 +30,7 @@ public class BenchmarkController {
     private final UserMapper userMapper;
 
     private static final double NS_TO_MS = 1_000_000.0;
+    private static final int RUNS = 3;
 
     @GetMapping
     public Map<String, Object> runBenchmark(
@@ -73,37 +74,49 @@ public class BenchmarkController {
         System.gc();
         try { Thread.sleep(50); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
 
-        System.gc();
-        Runtime runtime = Runtime.getRuntime();
-        long memBefore = runtime.totalMemory() - runtime.freeMemory();
-        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        long cpuBefore = threadMXBean.getCurrentThreadCpuTime();
-        List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
-        long gcBefore = gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionCount).sum();
+        double avgTimeMs = 0, p95Ms = 0, p99Ms = 0, cpuPercent = 0, throughput = 0;
+        long memoryPerOp = 0, gcCollections = 0;
 
-        List<Long> samples = new ArrayList<>(iterations);
-        long start = System.nanoTime();
-        for (int i = 0; i < iterations; i++) {
-            long s = System.nanoTime();
-            task.run();
-            samples.add(System.nanoTime() - s);
+        for (int run = 0; run < RUNS; run++) {
+            System.gc();
+            Runtime runtime = Runtime.getRuntime();
+            long memBefore = runtime.totalMemory() - runtime.freeMemory();
+            ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+            long cpuBefore = threadMXBean.getCurrentThreadCpuTime();
+            List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
+            long gcBefore = gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionCount).sum();
+
+            List<Long> samples = new ArrayList<>(iterations);
+            long start = System.nanoTime();
+            for (int i = 0; i < iterations; i++) {
+                long s = System.nanoTime();
+                task.run();
+                samples.add(System.nanoTime() - s);
+            }
+            long end = System.nanoTime();
+
+            long memAfter = runtime.totalMemory() - runtime.freeMemory();
+            long cpuAfter = threadMXBean.getCurrentThreadCpuTime();
+            long gcAfter = gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionCount).sum();
+
+            Collections.sort(samples);
+            avgTimeMs += (end - start) / NS_TO_MS / iterations;
+            p95Ms += samples.get((int) (samples.size() * 0.95)) / NS_TO_MS;
+            p99Ms += samples.get((int) (samples.size() * 0.99)) / NS_TO_MS;
+            memoryPerOp += Math.max(0, (memAfter - memBefore) / iterations);
+            cpuPercent += ((cpuAfter - cpuBefore) / NS_TO_MS) / ((end - start) / NS_TO_MS) * 100;
+            gcCollections += gcAfter - gcBefore;
+            throughput += iterations * 1000.0 / ((end - start) / NS_TO_MS);
         }
-        long end = System.nanoTime();
-
-        long memAfter = runtime.totalMemory() - runtime.freeMemory();
-        long cpuAfter = threadMXBean.getCurrentThreadCpuTime();
-        long gcAfter = gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionCount).sum();
-
-        Collections.sort(samples);
 
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("avgTimeMs", round((end - start) / NS_TO_MS / iterations));
-        m.put("p95Ms", round(samples.get((int) (samples.size() * 0.95)) / NS_TO_MS));
-        m.put("p99Ms", round(samples.get((int) (samples.size() * 0.99)) / NS_TO_MS));
-        m.put("memoryPerOpBytes", Math.max(0, (memAfter - memBefore) / iterations));
-        m.put("cpuPercent", round(((cpuAfter - cpuBefore) / NS_TO_MS) / ((end - start) / NS_TO_MS) * 100));
-        m.put("gcCollections", gcAfter - gcBefore);
-        m.put("throughput", round(iterations * 1000.0 / ((end - start) / NS_TO_MS)));
+        m.put("avgTimeMs", round(avgTimeMs / RUNS));
+        m.put("p95Ms", round(p95Ms / RUNS));
+        m.put("p99Ms", round(p99Ms / RUNS));
+        m.put("memoryPerOpBytes", memoryPerOp / RUNS);
+        m.put("cpuPercent", round(cpuPercent / RUNS));
+        m.put("gcCollections", gcCollections / RUNS);
+        m.put("throughput", round(throughput / RUNS));
         return m;
     }
 
