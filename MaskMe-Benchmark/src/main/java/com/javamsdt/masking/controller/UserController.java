@@ -133,7 +133,7 @@ public class UserController {
      * @return List of UserDto with multiple conditions applied
      */
     @GetMapping
-    public List<UserDto> getUsers(@RequestHeader("Mask-Input") String maskInput, @RequestHeader("Mask-Phone") String maskPhone) {
+    public List<UserDto> getUsers(@RequestHeader(value = "Mask-Input", defaultValue = "maskMe") String maskInput, @RequestHeader(value = "Mask-Phone", defaultValue = "") String maskPhone) {
 
         return userService.findUsers().stream()
                 .map(user ->
