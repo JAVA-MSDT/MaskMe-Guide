@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture – MaskMe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link active"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <h1>🏛️ Library Internal Architecture</h1>
+      <p>This document provides detailed information about the internal architecture and components of the MaskMe library. Intended for developers who want to understand how the library works internally or extend its functionality.</p>
+
+      <!-- TOC -->
+      <div class="toc">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#project-structure">Project Structure</a></li>
+          <li><a href="#processing-flow">Processing Flow</a></li>
+          <li><a href="#core-components">Core Components</a></li>
+          <li><a href="#type-conversion">Type Conversion System</a></li>
+          <li><a href="#framework-integration">Framework Integration</a></li>
+          <li><a href="#field-processing">Field Processing</a></li>
+          <li><a href="#thread-safety">Thread Safety</a></li>
+          <li><a href="#performance">Performance</a></li>
+        </ul>
+      </div>
+
+      <!-- Project Structure -->
+      <h2 id="project-structure">Project Structure</h2>
+<pre>maskme/
+├── src/main/java/io/github/javamsdt/maskme/
+│   ├── api/
+│   │   ├── annotation/
+│   │   │   └── MaskMe.java
+│   │   ├── condition/
+│   │   │   ├── MaskMeCondition.java
+│   │   │   ├── MaskMeConditionFactory.java
+│   │   │   └── MaskMeFrameworkProvider.java
+│   │   ├── converter/
+│   │   │   ├── MaskMeConverter.java
+│   │   │   └── MaskMeConverterRegistry.java
+│   │   ├── exception/
+│   │   │   └── MaskMeException.java
+│   │   ├── processor/
+│   │   │   └── MaskMeProcessor.java
+│   │   └── utils/
+│   │       └── MaskMeFieldAccessUtil.java
+│   ├── implementation/
+│   │   ├── condition/
+│   │   │   ├── AlwaysMaskMeCondition.java
+│   │   │   └── MaskMeOnInput.java
+│   │   └── converter/
+│   │       ├── MaskMeDateTimeConverter.java
+│   │       ├── MaskMeFallbackConverter.java
+│   │       ├── MaskMeNumberConverter.java
+│   │       ├── MaskMePrimitiveConverter.java
+│   │       ├── MaskMeSpecialTypeConverter.java
+│   │       └── MaskMeStringConverter.java
+│   ├── logging/
+│   │   └── MaskMeLogger.java
+│   └── MaskMeInitializer.java
+└── docs/</pre>
+
+      <!-- Processing Flow -->
+      <h2 id="processing-flow">Component Interaction Flow</h2>
+      <div class="diagram">┌─────────────────────────────────────────────────────────────────────────────┐
+│                           MASKME PROCESSING FLOW                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. CLIENT CODE                                                             │
+│     ┌─────────────────┐     ┌───────────────────┐                           │
+│     │ Annotated POJO  │───▶ │ MaskMeInitializer │                           │
+│     │ @MaskMe fields  │     │ (Static Facade)   │                           │
+│     └─────────────────┘     └───────────────────┘                           │
+│                                       │                                     │
+│  2. CORE PROCESSING                   ▼                                     │
+│     ┌─────────────────────────────────────────────────────────────────┐     │
+│     │                    MaskMeProcessor                              │     │
+│     │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │     │
+│     │  │   Field     │  │ Condition   │  │    Type Conversion      │  │     │
+│     │  │ Discovery   │─▶│ Evaluation  │─▶│      &amp; Assignment       │  │     │
+│     │  │ (Reflection)│  │   Engine    │  │                         │  │     │
+│     │  └─────────────┘  └─────────────┘  └─────────────────────────┘  │     │
+│     └─────────────────────────────────────────────────────────────────┘     │
+│                                       │                                     │
+│  3. CONDITION RESOLUTION              ▼                                     │
+│     ┌─────────────────────────────────────────────────────────────────┐     │
+│     │              MaskMeConditionFactory                             │     │
+│     │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │     │
+│     │  │ Framework   │  │  Built-in   │  │      Custom             │  │     │
+│     │  │ Provider    │─▶│ Conditions  │  │    Conditions           │  │     │
+│     │  │ (DI Support)│  │             │  │                         │  │     │
+│     │  └─────────────┘  └─────────────┘  └─────────────────────────┘  │     │
+│     └─────────────────────────────────────────────────────────────────┘     │
+│                                       │                                     │
+│  4. TYPE CONVERSION                   ▼                                     │
+│     ┌─────────────────────────────────────────────────────────────────┐     │
+│     │                  ConverterRegistry                              │     │
+│     │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │     │
+│     │  │   Scoped    │  │  Built-in   │  │      Custom             │  │     │
+│     │  │ Converters  │─▶│ Converters  │  │    Converters           │  │     │
+│     │  │(Thread/Req) │  │             │  │                         │  │     │
+│     │  └─────────────┘  └─────────────┘  └─────────────────────────┘  │     │
+│     └─────────────────────────────────────────────────────────────────┘     │
+│                                       │                                     │
+│  5. OUTPUT                            ▼                                     │
+│     ┌─────────────────┐                                                     │
+│     │ Masked Object   │◀─────────────────────────────────────────────────   │
+│     │ (Same Type)     │                                                     │
+│     └─────────────────┘                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+      <!-- Core Components -->
+      <h2 id="core-components">Core Components</h2>
+
+      <h3>1. @MaskMe Annotation</h3>
+<pre><span class="an">@Target</span>({ElementType.FIELD, ElementType.RECORD_COMPONENT})
+<span class="an">@Retention</span>(RetentionPolicy.RUNTIME)
+<span class="kw">public @interface</span> <span class="tp">MaskMe</span> {
+    String DEFAULT_MASK_VALUE = <span class="str">"****"</span>;
+    Class&lt;? <span class="kw">extends</span> MaskCondition&gt;[] <span class="fn">conditions</span>();
+    String <span class="fn">maskValue</span>() <span class="kw">default</span> DEFAULT_MASK_VALUE;
+}</pre>
+      <ul>
+        <li>Supports fields and record components</li>
+        <li>Runtime retention for reflection-based processing</li>
+        <li>Multiple condition support through an array</li>
+        <li>Default mask value fallback</li>
+      </ul>
+
+      <h3>2. MaskMeCondition Interface</h3>
+<pre><span class="kw">public interface</span> <span class="tp">MaskMeCondition</span> {
+    <span class="kw">boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField);
+    <span class="kw">default void</span> <span class="fn">setInput</span>(Object input) { }
+}</pre>
+      <ul>
+        <li><code>shouldMask()</code> — Core logic to determine if masking should occur</li>
+        <li><code>setInput()</code> — Optional method to receive runtime input</li>
+        <li>Access to both field value and containing object for context-aware decisions</li>
+      </ul>
+
+      <h3>3. MaskMeProcessor</h3>
+      <p>The main processing engine. Handles reflection-based field discovery, condition evaluation, type conversion coordination, ThreadLocal management, and nested object processing.</p>
+
+      <h3>4. MaskMeInitializer</h3>
+      <p>Simplified static facade for common masking operations. Provides automatic ThreadLocal cleanup, varargs support for condition-input pairs, and thread-safe operation.</p>
+
+      <!-- Type Conversion -->
+      <h2 id="type-conversion">Type Conversion System</h2>
+
+      <div class="diagram">┌─────────────────────────────────────────────┐
+│           CONVERTER EXECUTION ORDER         │
+├─────────────────────────────────────────────┤
+│ 1. USER CONVERTERS (Priority &gt; 0)           │
+│    • Custom business logic                  │
+│    • Override default behavior              │
+│                                             │
+│ 2. DEFAULT CONVERTERS (Priority = 0)        │
+│    • PrimitiveConverter                     │
+│    • NumberConverter                        │
+│    • DateTimeConverter                      │
+│    • SpecialTypeConverter                   │
+│    • FallbackConverter                      │
+│    • StringConverter                        │
+└─────────────────────────────────────────────┘</div>
+
+      <h3>Built-in Converters</h3>
+      <table>
+        <thead><tr><th>Converter</th><th>Handles</th><th>Special Features</th></tr></thead>
+        <tbody>
+          <tr><td>PrimitiveConverter</td><td>Character, Boolean, primitives, wrappers</td><td>Null values, primitive type conversion</td></tr>
+          <tr><td>NumberConverter</td><td>byte, int, long, float, double, BigDecimal, BigInteger</td><td>Blank mask handling, BigDecimal scale</td></tr>
+          <tr><td>DateTimeConverter</td><td>LocalDate, LocalDateTime, Instant, ZonedDateTime, etc.</td><td>All Java 8+ and legacy date types</td></tr>
+          <tr><td>SpecialTypeConverter</td><td>UUID, File, Path, Enums</td><td>Case-insensitive enum, UUID parsing</td></tr>
+          <tr><td>FallbackConverter</td><td>Any unhandled type</td><td>Returns null for graceful degradation</td></tr>
+          <tr><td>StringConverter</td><td>String types</td><td>Returns null if nothing to handle</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Converter Scope Hierarchy</h3>
+      <div class="diagram">┌─────────────────────────────────────────────┐
+│           CONVERTER SCOPE PRIORITY          │
+├─────────────────────────────────────────────┤
+│ 1. THREAD-SCOPED (Highest Priority)         │
+│    • Test isolation                         │
+│    • Background job specific                │
+│                                             │
+│ 2. REQUEST-SCOPED (Web Applications)        │
+│    • User-specific converters               │
+│    • Session-based rules                    │
+│                                             │
+│ 3. GLOBAL-SCOPED (Application-wide)         │
+│    • Default application converters         │
+│    • Shared business rules                  │
+│                                             │
+│ 4. DEFAULT CONVERTERS (Lowest Priority)     │
+│    • Built-in type converters               │
+└─────────────────────────────────────────────┘</div>
+
+      <!-- Framework Integration -->
+      <h2 id="framework-integration">Framework Integration Architecture</h2>
+
+      <h3>Framework Provider Pattern</h3>
+<pre><span class="kw">public interface</span> <span class="tp">MaskMeFrameworkProvider</span> {
+    &lt;T&gt; T <span class="fn">getInstance</span>(Class&lt;T&gt; type);
+}</pre>
+      <p>Abstracts framework-specific bean resolution. Spring uses <code>ApplicationContext.getBean()</code>, CDI uses <code>BeanManager</code>, and pure Java uses manual instance creation.</p>
+
+      <h3>Design Philosophy: Framework-Agnostic</h3>
+      <div class="callout info">
+        <strong>Why MaskMe doesn't cache condition instances</strong>
+        MaskMe delegates lifecycle management to your framework. Without registration, it falls back to reflection (new instance each time). With registration, your framework provides singletons.
+      </div>
+
+      <div class="compare">
+        <div class="card bad">
+          <h4>❌ Without Registration</h4>
+<pre><span class="an">@MaskMe</span>(conditions = {AlwaysMaskMeCondition.<span class="kw">class</span>})
+String field1; <span class="cm">// New instance #1</span>
+String field2; <span class="cm">// New instance #2</span>
+String field3; <span class="cm">// New instance #3</span>
+<span class="cm">// 3 separate instances via reflection</span></pre>
+        </div>
+        <div class="card good">
+          <h4>✅ With Registration</h4>
+<pre><span class="an">@Bean</span>
+<span class="kw">public</span> AlwaysMaskMeCondition <span class="fn">always</span>() {
+    <span class="kw">return new</span> AlwaysMaskMeCondition();
+}
+<span class="cm">// 1 singleton reused 3 times</span></pre>
+        </div>
+      </div>
+
+      <!-- Field Processing -->
+      <h2 id="field-processing">Field Processing Architecture</h2>
+
+      <h3>Masking Pipeline</h3>
+      <div class="diagram">Input Object
+     ↓
+Field Discovery (Record components or declared fields)
+     ↓
+For Each @MaskMe Field:
+     ↓
+Condition Evaluation
+     ↓
+Should Mask? ──(No)──▶ Skip
+     ↓ (Yes)
+Mask Value Processing
+     ↓
+Field Reference Resolution ({fieldName} → actual value)
+     ↓
+Type Conversion
+     ↓
+Field Assignment
+     ↓
+Nested Object Processing
+     ↓
+Output Masked Object (new instance, original unchanged)</div>
+
+      <h3>Field Reference Resolution</h3>
+      <ul>
+        <li><strong>Default Pattern:</strong> <code>{fieldName}</code> — regex <code>\{([^}]+)\}</code></li>
+        <li><strong>Custom Patterns:</strong> Configurable via <code>MaskMeFieldAccessUtil.setUserPattern()</code></li>
+        <li>Supports <code>{}</code>, <code>[]</code>, <code>()</code>, <code>&lt;&gt;</code>, <code>[[]]</code></li>
+      </ul>
+
+      <!-- Thread Safety -->
+      <h2 id="thread-safety">Thread Safety Architecture</h2>
+<pre><span class="kw">private static final</span> ThreadLocal&lt;Map&lt;Class&lt;? <span class="kw">extends</span> MaskMeCondition&gt;, Object&gt;&gt;
+        conditionInputs = <span class="kw">new</span> ThreadLocal&lt;&gt;();</pre>
+      <ul>
+        <li>Thread isolation prevents cross-request contamination</li>
+        <li>No synchronization overhead</li>
+        <li><code>MaskMeInitializer</code> — automatic cleanup in finally blocks</li>
+        <li><code>MaskMeProcessor</code> — manual <code>clearInputs()</code> required</li>
+      </ul>
+
+      <!-- Performance -->
+      <h2 id="performance">Performance Characteristics</h2>
+      <table>
+        <thead><tr><th>Aspect</th><th>Complexity</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Field Discovery</td><td>O(n)</td><td>n = number of fields</td></tr>
+          <tr><td>Condition Evaluation</td><td>O(c)</td><td>c = conditions per field, first match wins</td></tr>
+          <tr><td>Type Conversion</td><td>O(1)</td><td>Most types</td></tr>
+          <tr><td>Overall (flat)</td><td>O(n × c)</td><td>Flat objects</td></tr>
+          <tr><td>Overall (nested)</td><td>O(n × c × d)</td><td>d = nesting depth</td></tr>
+          <tr><td>Memory</td><td>O(n)</td><td>Object duplication</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Error Handling</h3>
+      <ul>
+        <li><strong>Graceful Degradation:</strong> Returns null for unknown types</li>
+        <li><strong>Logging:</strong> Warns about non-critical failures</li>
+        <li><strong>Fallback:</strong> Uses reflection when framework injection fails</li>
+        <li><strong>Propagation:</strong> Critical errors bubble up as <code>MaskMeException</code></li>
+      </ul>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <a href="index.html">
+          <span class="label">← Previous</span>
+          <span class="title">Overview</span>
+        </a>
+        <a href="pure-java.html">
+          <span class="label">Next →</span>
+          <span class="title">Pure Java Guide</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pure Java Guide – MaskMe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link active"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <h1>☕ Pure Java Integration Guide</h1>
+      <p>No framework dependencies — simple, lightweight, and portable. Manual dependency injection using a Map-based registry.</p>
+      <p><a href="https://github.com/JAVA-MSDT/MaskMe-Guide/tree/main/Pure-java-maskme" target="_blank">📦 Full example project on GitHub →</a></p>
+
+      <!-- Step 1 -->
+      <h2 id="configuration">Step 1: Framework Configuration</h2>
+<pre><span class="kw">public class</span> <span class="tp">MaskMeConfiguration</span> {
+
+    <span class="kw">private static final</span> Map&lt;Class&lt;?&gt;, Object&gt; instances = <span class="kw">new</span> HashMap&lt;&gt;();
+
+    <span class="kw">public static void</span> <span class="fn">setupMaskMe</span>(UserService userService) {
+        <span class="fn">registerFrameworkProvider</span>();
+        <span class="fn">setupCustomConverters</span>();
+        <span class="fn">registerConditionInstances</span>(userService);
+    }
+
+    <span class="kw">private static void</span> <span class="fn">registerFrameworkProvider</span>() {
+        MaskMeConditionFactory.<span class="fn">setFrameworkProvider</span>(<span class="kw">new</span> MaskMeFrameworkProvider() {
+            <span class="an">@Override</span>
+            <span class="kw">public</span> &lt;T&gt; T <span class="fn">getInstance</span>(Class&lt;T&gt; type) {
+                <span class="kw">return</span> (T) instances.<span class="fn">get</span>(type);
+            }
+        });
+    }
+
+    <span class="kw">private static void</span> <span class="fn">setupCustomConverters</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomStringConverter());
+    }
+
+    <span class="kw">private static void</span> <span class="fn">registerConditionInstances</span>(UserService userService) {
+        instances.<span class="fn">put</span>(AlwaysMaskMeCondition.<span class="kw">class</span>, <span class="kw">new</span> AlwaysMaskMeCondition());
+        instances.<span class="fn">put</span>(MaskMeOnInput.<span class="kw">class</span>, <span class="kw">new</span> MaskMeOnInput());
+        instances.<span class="fn">put</span>(PhoneMaskingCondition.<span class="kw">class</span>, <span class="kw">new</span> PhoneMaskingCondition(userService));
+    }
+
+    <span class="kw">public static void</span> <span class="fn">destroy</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+        instances.<span class="fn">clear</span>();
+    }
+}</pre>
+
+      <div class="callout warn">
+        <strong>⚠️ Why register built-in conditions?</strong>
+        MaskMe creates a NEW instance every time it encounters a condition annotation unless you register them in your Map as singletons. Registration gives you memory efficiency, no reflection overhead, and is required for custom conditions with dependencies.
+      </div>
+
+      <!-- Step 2 -->
+      <h2 id="custom-conditions">Step 2: Custom Conditions with Manual DI</h2>
+<pre><span class="kw">public class</span> <span class="tp">PhoneMaskingCondition</span> <span class="kw">implements</span> MaskMeCondition {
+
+    <span class="kw">private final</span> UserService userService;
+    <span class="kw">private</span> String input;
+
+    <span class="kw">public</span> <span class="fn">PhoneMaskingCondition</span>(UserService userService) {
+        <span class="kw">this</span>.userService = userService;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String inputValue) {
+            <span class="kw">this</span>.input = inputValue;
+        }
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">boolean</span> anyUserPhoneMatched = userService.<span class="fn">findUsers</span>().stream()
+                .<span class="fn">anyMatch</span>(user -> user.<span class="fn">getPhone</span>().<span class="fn">equals</span>(maskedFieldValue));
+        <span class="kw">return</span> input != <span class="kw">null</span> && input.<span class="fn">equals</span>(maskedFieldValue) && anyUserPhoneMatched;
+    }
+}</pre>
+
+      <!-- Step 3 -->
+      <h2 id="dto-usage">Step 3: Annotate Your DTOs</h2>
+<pre><span class="kw">public record</span> <span class="tp">UserDto</span>(
+        <span class="an">@MaskMe</span>(conditions = {AlwaysMaskMeCondition.<span class="kw">class</span>}, maskValue = <span class="str">"****"</span>)
+        String password,
+
+        <span class="an">@MaskMe</span>(conditions = {MaskMeOnInput.<span class="kw">class</span>}, maskValue = <span class="str">"{name}@masked.com"</span>)
+        String email,
+
+        <span class="an">@MaskMe</span>(conditions = {PhoneMaskingCondition.<span class="kw">class</span>}, maskValue = <span class="str">"***-**-****"</span>)
+        String phone,
+
+        String name
+) {}</pre>
+
+      <!-- Step 4 -->
+      <h2 id="application">Step 4: Application Integration</h2>
+
+      <h3>Using MaskMeInitializer (Recommended)</h3>
+<pre><span class="kw">public class</span> <span class="tp">UserMasking</span> {
+
+    <span class="kw">private final</span> UserService userService;
+
+    <span class="kw">public void</span> <span class="fn">getMaskedUserById</span>(Long id, String maskInput) {
+        UserDto userDto = userMapper.<span class="fn">toDto</span>(userService.<span class="fn">findUserById</span>(id));
+        UserDto masked = MaskMeInitializer.<span class="fn">mask</span>(userDto, MaskMeOnInput.<span class="kw">class</span>, maskInput);
+        System.out.<span class="fn">println</span>(masked);
+    }
+
+    <span class="kw">public void</span> <span class="fn">getUsers</span>(String maskInput, String maskPhone) {
+        List&lt;UserDto&gt; users = userService.<span class="fn">findUsers</span>().stream()
+                .<span class="fn">map</span>(user -> MaskMeInitializer.<span class="fn">mask</span>(userMapper.<span class="fn">toDto</span>(user),
+                        MaskMeOnInput.<span class="kw">class</span>, maskInput,
+                        PhoneMaskingCondition.<span class="kw">class</span>, maskPhone))
+                .<span class="fn">toList</span>();
+        users.<span class="fn">forEach</span>(System.out::println);
+    }
+}</pre>
+
+      <h3>Using MaskMeProcessor (Manual Cleanup)</h3>
+<pre><span class="kw">public</span> UserDto <span class="fn">getDetailedUser</span>(Long id, <span class="kw">boolean</span> maskSensitive) {
+    <span class="kw">try</span> {
+        maskProcessor.<span class="fn">setConditionInput</span>(MaskMeOnInput.<span class="kw">class</span>, maskSensitive ? <span class="str">"maskMe"</span> : <span class="str">"none"</span>);
+        <span class="kw">return</span> maskProcessor.<span class="fn">process</span>(mapper.<span class="fn">toDto</span>(repository.<span class="fn">findById</span>(id)));
+    } <span class="kw">finally</span> {
+        maskProcessor.<span class="fn">clearInputs</span>();
+    }
+}</pre>
+
+      <!-- Practical Examples -->
+      <h2 id="examples">Practical Examples</h2>
+
+      <h3>@ExcludeMaskMe Annotation</h3>
+<pre><span class="kw">public record</span> <span class="tp">UserDto</span>(
+        String name,
+        <span class="an">@ExcludeMaskMe</span>
+        AddressDto address, <span class="cm">// Entire object skipped</span>
+        <span class="an">@MaskMe</span>(conditions = {AlwaysMaskMeCondition.<span class="kw">class</span>})
+        String ssn
+) {}</pre>
+
+      <h3>Multiple Conditions (OR Logic)</h3>
+<pre><span class="an">@MaskMe</span>(
+    conditions = {RoleBasedCondition.<span class="kw">class</span>, EnvironmentCondition.<span class="kw">class</span>},
+    maskValue = <span class="str">"***"</span>
+)
+String sensitiveData; <span class="cm">// Masked if ANY condition returns true</span></pre>
+
+      <!-- Testing -->
+      <h2 id="testing">Testing</h2>
+<pre><span class="an">@DisplayName</span>(<span class="str">"User Masking Test"</span>)
+<span class="kw">class</span> <span class="tp">UserMaskingTest</span> {
+
+    <span class="an">@BeforeAll</span>
+    <span class="kw">static void</span> <span class="fn">setup</span>() {
+        userService = <span class="kw">new</span> UserService();
+        MaskMeConfiguration.<span class="fn">setupMaskMe</span>(userService);
+    }
+
+    <span class="an">@BeforeEach</span>
+    <span class="kw">void</span> <span class="fn">setUp</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearThreadLocal</span>();
+        MaskMeConverterRegistry.<span class="fn">registerThreadLocal</span>(<span class="kw">new</span> TestEmailConverter());
+    }
+
+    <span class="an">@AfterEach</span>
+    <span class="kw">void</span> <span class="fn">tearDown</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearThreadLocal</span>();
+    }
+
+    <span class="an">@Test</span>
+    <span class="kw">void</span> <span class="fn">testUserMasking</span>() {
+        UserDto masked = MaskMeInitializer.<span class="fn">mask</span>(user, MaskMeOnInput.<span class="kw">class</span>, <span class="str">"maskMe"</span>);
+        assertThat(masked.<span class="fn">password</span>()).<span class="fn">isEqualTo</span>(<span class="str">"****"</span>);
+    }
+}</pre>
+
+      <!-- Common Issues -->
+      <h2 id="issues">Common Issues &amp; Solutions</h2>
+      <div class="callout danger">
+        <strong>Condition Not Found</strong>
+        Register the condition instance in the Map: <code>instances.put(PhoneMaskingCondition.class, new PhoneMaskingCondition(userService))</code>
+      </div>
+      <div class="callout danger">
+        <strong>NullPointerException in Condition</strong>
+        Ensure the condition is created with its dependencies — don't use the no-arg constructor.
+      </div>
+      <div class="callout warn">
+        <strong>Memory Leaks</strong>
+        Always call <code>destroy()</code> on shutdown to clear converters and the instance registry.
+      </div>
+
+      <!-- Comparison -->
+      <h2 id="comparison">Pure Java vs. Framework</h2>
+      <table>
+        <thead><tr><th>Aspect</th><th>Pure Java</th><th>Spring / Quarkus</th></tr></thead>
+        <tbody>
+          <tr><td>Dependency Injection</td><td>Manual Map-based registry</td><td>Automatic via framework</td></tr>
+          <tr><td>Bean Management</td><td>Manual instance creation</td><td>Framework-managed beans</td></tr>
+          <tr><td>Configuration</td><td>Static methods</td><td>@Configuration / @ApplicationScoped</td></tr>
+          <tr><td>Complexity</td><td>Simple, explicit</td><td>More abstraction</td></tr>
+          <tr><td>Dependencies</td><td>Zero framework deps</td><td>Framework required</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <a href="architecture.html">
+          <span class="label">← Previous</span>
+          <span class="title">Architecture</span>
+        </a>
+        <a href="spring.html">
+          <span class="label">Next →</span>
+          <span class="title">Spring Guide</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

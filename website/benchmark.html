@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark – MaskMe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link active"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <h1>📊 MaskMe Benchmark</h1>
+      <p>Performance comparison between hardcoded masking and MaskMe's annotation-driven approach. The <strong>MaskMe-Benchmark</strong> project is a Spring Boot demo application and benchmark suite that includes a web UI, REST API, and CLI benchmark runner.</p>
+
+      <div class="callout info">
+        <strong>MaskMe-Benchmark Project</strong>
+        A dedicated benchmark project lives in the <code>MaskMe-Benchmark/</code> folder. It includes a web UI at <code>http://localhost:9090</code> with interactive API demos, live benchmark runner, and side-by-side comparison of hardcoded vs annotation-driven masking. Run it with <code>mvn spring-boot:run</code> or the CLI benchmark with <code>mvn exec:java</code>.
+      </div>
+
+      <div class="toc">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#what">What It Compares</a></li>
+          <li><a href="#methodology">Methodology</a></li>
+          <li><a href="#results">Benchmark Results</a></li>
+          <li><a href="#context">Real-World Context</a></li>
+          <li><a href="#when">When to Use Which</a></li>
+        </ul>
+      </div>
+
+      <!-- What -->
+      <h2 id="what">What It Compares</h2>
+      <table>
+        <thead><tr><th>Approach</th><th>How It Masks</th><th>Code</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Hardcoded</strong></td><td>Manual <code>new UserDto(...)</code> with inline masking logic</td><td><code>UserDto.mask()</code></td></tr>
+          <tr><td><strong>MaskMe</strong></td><td><code>MaskMeInitializer.mask(dto, Condition.class, input)</code></td><td>Annotation-driven via <code>@MaskMe</code></td></tr>
+        </tbody>
+      </table>
+      <p>Both approaches mask the same 15 fields (11 UserDto + 4 AddressDto) with the same masking rules.</p>
+
+      <h3>Scenarios Tested</h3>
+      <table>
+        <thead><tr><th>Scenario</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Single Condition</td><td><code>MaskMeOnInput</code> only</td></tr>
+          <tr><td>Multiple Conditions</td><td><code>MaskMeOnInput</code> + <code>PhoneMaskingCondition</code></td></tr>
+          <tr><td>Batch Processing</td><td>1,000 sequential masking operations</td></tr>
+          <tr><td>Concurrent</td><td>10 threads × 1,000 operations each</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Methodology -->
+      <h2 id="methodology">Benchmark Methodology</h2>
+      <p>The benchmark follows JMH-style methodology (7 of 8 best practices):</p>
+
+      <div class="diagram">Warmup (10K iterations)
+    → JIT compilation &amp; C2 optimization
+    ↓
+GC Stabilization
+    → System.gc() + 100ms pause
+    ↓
+Measurement (3 runs × 100K iterations)
+    → Per-sample System.nanoTime() timing
+    → Memory via Runtime.totalMemory() - freeMemory()
+    → CPU via ThreadMXBean.getCurrentThreadCpuTime()
+    → GC via GarbageCollectorMXBean.getCollectionCount()
+    ↓
+Multi-Run Averaging
+    → 3 runs averaged to reduce OS/thermal variance
+    ↓
+Statistical Analysis
+    → Sort samples → p95, p99 percentiles
+    → Throughput = ops / elapsed time</div>
+
+      <h3>What We Follow</h3>
+      <table>
+        <thead><tr><th>Practice</th><th>Implementation</th></tr></thead>
+        <tbody>
+          <tr><td>Warmup phase</td><td>10,000 iterations for JIT optimization</td></tr>
+          <tr><td>GC stabilization</td><td><code>System.gc()</code> + sleep between warmup and measurement</td></tr>
+          <tr><td>Per-sample timing</td><td><code>System.nanoTime()</code> per iteration</td></tr>
+          <tr><td>Percentile analysis</td><td>Sorted samples, p95/p99 by index</td></tr>
+          <tr><td>Multi-dimensional metrics</td><td>Time, memory, CPU, GC, throughput</td></tr>
+          <tr><td>High iteration count</td><td>100,000 per run</td></tr>
+          <tr><td>Same data/conditions</td><td>Identical DTO, same field count, same values</td></tr>
+          <tr><td>Multi-run averaging</td><td>3 runs averaged (±2-5% variance)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Honest Limitations</h3>
+      <table>
+        <thead><tr><th>Limitation</th><th>Impact</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>No fork isolation</td><td>JIT profile pollution</td><td>Hardcoded runs first → bias favors MaskMe (conservative)</td></tr>
+          <tr><td>No Blackhole</td><td>Theoretical dead-code elimination</td><td>Both paths have side effects (object creation, reflection)</td></tr>
+          <tr><td>Timer overhead</td><td>~20-30ns per sample</td><td>Both pay same cost → relative comparison valid</td></tr>
+          <tr><td>Memory approximation</td><td>Snapshot, not precise</td><td>Same method for both → relative comparison valid</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Results -->
+      <h2 id="results">Benchmark Results</h2>
+      <p><strong>Environment:</strong> aarch64, JVM 21.0.9, 6144MB RAM, 3 runs × 100K iterations</p>
+
+      <h3>Single Condition</h3>
+      <table>
+        <thead><tr><th>Metric</th><th>Hardcoded</th><th>MaskMe</th><th>Impact</th></tr></thead>
+        <tbody>
+          <tr><td>Avg Time</td><td>0.0008ms</td><td>0.0806ms</td><td>+9,767%</td></tr>
+          <tr><td>95th Percentile</td><td>0.0016ms</td><td>0.0917ms</td><td>+5,544%</td></tr>
+          <tr><td>Memory per Op</td><td>0.73 KB</td><td>0.30 KB</td><td style="color:var(--green)">-59%</td></tr>
+          <tr><td>CPU Usage</td><td>99.1%</td><td>98.9%</td><td>~0%</td></tr>
+          <tr><td>GC Collections</td><td>4</td><td>70</td><td>+1,650%</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Multiple Conditions</h3>
+      <table>
+        <thead><tr><th>Metric</th><th>Hardcoded</th><th>MaskMe</th><th>Impact</th></tr></thead>
+        <tbody>
+          <tr><td>Avg Time</td><td>0.0004ms</td><td>0.0812ms</td><td>+18,891%</td></tr>
+          <tr><td>95th Percentile</td><td>0.0008ms</td><td>0.0903ms</td><td>+11,944%</td></tr>
+          <tr><td>Memory per Op</td><td>0.51 KB</td><td>0.26 KB</td><td style="color:var(--green)">-49%</td></tr>
+          <tr><td>CPU Usage</td><td>95.0%</td><td>98.9%</td><td>+4%</td></tr>
+          <tr><td>GC Collections</td><td>4</td><td>71</td><td>+1,675%</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Batch &amp; Concurrent</h3>
+      <table>
+        <thead><tr><th>Scenario</th><th>Hardcoded</th><th>MaskMe</th><th>Impact</th></tr></thead>
+        <tbody>
+          <tr><td>Batch (1000) — Avg Time</td><td>0.0004ms</td><td>0.0815ms</td><td>+19,590%</td></tr>
+          <tr><td>Batch — Throughput</td><td>2,415,704 ops/s</td><td>12,269 ops/s</td><td>-99.5%</td></tr>
+          <tr><td>Concurrent (10 threads)</td><td>1ms</td><td>388ms</td><td>+38,700%</td></tr>
+          <tr><td>Concurrent — Throughput</td><td>10,000,000 ops/s</td><td>25,773 ops/s</td><td>-99.7%</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Context -->
+      <h2 id="context">Real-World Context</h2>
+
+      <div class="callout success">
+        <strong>⚠️ Don't let the microbenchmark scare you.</strong>
+        The +9,767% compares two near-zero values in isolation. In a real web request, MaskMe adds only 0.08% overhead.
+      </div>
+
+      <div class="diagram">Typical web request:
+
+Total Response Time: 100ms
+├─ Network latency:    20ms    (20%)
+├─ Database query:     40ms    (40%)
+├─ Business logic:     15ms    (15%)
+├─ Authentication:     10ms    (10%)
+├─ JSON serialization:  5ms    (5%)    ← Jackson
+└─ MaskMe masking:    0.08ms   (0.08%) ← 11 fields + nested</div>
+
+      <table>
+        <thead><tr><th>Perspective</th><th>Hardcoded</th><th>MaskMe</th><th>Impact</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Microbenchmark</strong> (isolated)</td><td>0.0008ms</td><td>0.08ms</td><td>+9,767%</td></tr>
+          <tr><td><strong>Real application</strong> (full request)</td><td>99.92ms</td><td>100ms</td><td style="color:var(--green)"><strong>+0.08%</strong></td></tr>
+          <tr><td><strong>Per-field cost</strong></td><td>~0.00007ms</td><td>~0.007ms</td><td>Competitive with Jackson</td></tr>
+        </tbody>
+      </table>
+
+      <!-- When -->
+      <h2 id="when">When to Use Which</h2>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>Use Hardcoded When</h4>
+          <ul>
+            <li>Ultra-high performance (&lt;10ms budget)</li>
+            <li>Simple masking (1-3 fields)</li>
+            <li>&gt;10K req/sec hot paths</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color: var(--accent);">
+          <h4>Use MaskMe When ✨</h4>
+          <ul class="feature-list">
+            <li>Complex conditional masking</li>
+            <li>Multiple DTOs / endpoints</li>
+            <li>Team collaboration</li>
+            <li>Compliance / audit trail</li>
+            <li>New development / microservices</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Benchmark Project Details</h3>
+      <p>The <strong>MaskMe-Benchmark</strong> project includes:</p>
+      <ul>
+        <li><strong>Web UI</strong> — Overview page, live benchmark runner, interactive API demo at <code>http://localhost:9090</code></li>
+        <li><strong>REST API</strong> — <code>GET /benchmark</code> endpoint for live benchmarks with configurable warmup and iterations</li>
+        <li><strong>CLI Benchmark</strong> — <code>mvn exec:java</code> for command-line benchmark execution</li>
+        <li><strong>Side-by-side comparison</strong> — Visual user cards showing masked vs unmasked fields</li>
+        <li><strong>Tech Stack</strong> — Spring Boot 4.0.1, Java 21, MapStruct, Vanilla HTML/CSS/JS</li>
+      </ul>
+<pre><span class="cm"># Run the web UI + API</span>
+cd MaskMe-Benchmark
+mvn clean install
+mvn spring-boot:run
+
+<span class="cm"># Run the CLI benchmark</span>
+mvn exec:java</pre>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <a href="converters.html">
+          <span class="label">← Previous</span>
+          <span class="title">Converters</span>
+        </a>
+        <a href="index.html">
+          <span class="label">Back to →</span>
+          <span class="title">Overview</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

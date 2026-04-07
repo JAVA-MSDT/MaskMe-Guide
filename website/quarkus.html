@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quarkus Guide – MaskMe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link active"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <h1>⚡ Quarkus Integration Guide</h1>
+      <p>Leverage CDI (Contexts and Dependency Injection), configuration management, and native compilation support with MaskMe.</p>
+      <p><a href="https://github.com/JAVA-MSDT/MaskMe-Guide/tree/main/Quarkus-maskme" target="_blank">📦 Full example project on GitHub →</a></p>
+
+      <div class="toc">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#running">Running the Application</a></li>
+          <li><a href="#configuration">Framework Configuration</a></li>
+          <li><a href="#unremovable">Why @Unremovable is Required</a></li>
+          <li><a href="#custom-conditions">Custom Conditions with CDI</a></li>
+          <li><a href="#resource">REST Resource Integration</a></li>
+          <li><a href="#native">Native Compilation</a></li>
+          <li><a href="#testing">Testing</a></li>
+          <li><a href="#differences">Quarkus vs Spring</a></li>
+          <li><a href="#issues">Common Issues</a></li>
+        </ul>
+      </div>
+
+      <!-- Running -->
+      <h2 id="running">Running the Application</h2>
+<pre>cd Quarkus-maskme
+mvn clean install
+mvn quarkus:dev</pre>
+      <p>The application starts on <code>http://localhost:9091</code></p>
+
+      <table>
+        <thead><tr><th>Endpoint</th><th>Method</th><th>Headers</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>/users/{id}</code></td><td>GET</td><td>—</td><td>Get user without masking</td></tr>
+          <tr><td><code>/users/masked/{id}</code></td><td>GET</td><td><code>Mask-Input: maskMe</code></td><td>Get user with conditional masking</td></tr>
+          <tr><td><code>/users</code></td><td>GET</td><td><code>Mask-Input</code> + <code>Mask-Phone</code></td><td>Get all users with masking</td></tr>
+          <tr><td><code>/users/user/{id}</code></td><td>GET</td><td>—</td><td>Get domain entity with masking</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Configuration -->
+      <h2 id="configuration">Step 1: Framework Configuration</h2>
+<pre><span class="an">@ApplicationScoped</span>
+<span class="kw">public class</span> <span class="tp">MaskMeConfiguration</span> {
+
+    <span class="kw">void</span> <span class="fn">onStart</span>(<span class="an">@Observes</span> StartupEvent ev) {
+        <span class="fn">registerFrameworkProvider</span>();
+        <span class="fn">setupCustomConverters</span>();
+    }
+
+    <span class="kw">private void</span> <span class="fn">registerFrameworkProvider</span>() {
+        MaskMeConditionFactory.<span class="fn">setFrameworkProvider</span>(<span class="kw">new</span> MaskMeFrameworkProvider() {
+            <span class="an">@Override</span>
+            <span class="kw">public</span> &lt;T&gt; T <span class="fn">getInstance</span>(Class&lt;T&gt; type) {
+                <span class="kw">try</span> {
+                    <span class="kw">return</span> CDI.<span class="fn">current</span>().<span class="fn">select</span>(type).<span class="fn">get</span>();
+                } <span class="kw">catch</span> (Exception e) {
+                    <span class="kw">return null</span>; <span class="cm">// Fall back to reflection</span>
+                }
+            }
+        });
+    }
+
+    <span class="an">@Produces</span> <span class="an">@ApplicationScoped</span> <span class="an">@Unremovable</span>
+    <span class="kw">public</span> AlwaysMaskMeCondition <span class="fn">alwaysMaskMeCondition</span>() {
+        <span class="kw">return new</span> AlwaysMaskMeCondition();
+    }
+
+    <span class="an">@Produces</span> <span class="an">@ApplicationScoped</span> <span class="an">@Unremovable</span>
+    <span class="kw">public</span> MaskMeOnInput <span class="fn">maskMeOnInput</span>() {
+        <span class="kw">return new</span> MaskMeOnInput();
+    }
+
+    <span class="kw">private void</span> <span class="fn">setupCustomConverters</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomStringConverter());
+    }
+
+    <span class="kw">void</span> <span class="fn">onStop</span>(<span class="an">@Observes</span> ShutdownEvent ev) {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+    }
+}</pre>
+
+      <!-- @Unremovable -->
+      <h2 id="unremovable">⚠️ Critical: Why @Unremovable is Required</h2>
+
+      <div class="callout danger">
+        <strong>Quarkus removes "unused" beans at build time for optimization.</strong>
+        MaskMe looks up beans programmatically via <code>CDI.current().select(type).get()</code>. Quarkus doesn't see this as "usage" and removes the bean. <code>@Unremovable</code> tells Quarkus: "Keep this bean even if it looks unused."
+      </div>
+
+      <div class="compare">
+        <div class="card bad">
+          <h4>❌ Without @Unremovable</h4>
+          <p>Quarkus removes the bean → MaskMe falls back to reflection → 3 separate instances created for 3 fields.</p>
+        </div>
+        <div class="card good">
+          <h4>✅ With @Unremovable</h4>
+          <p>Bean is kept → 1 CDI singleton instance reused across all fields. Memory efficient, no reflection overhead.</p>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <strong>When @Unremovable is REQUIRED</strong>
+        For custom conditions with dependencies (constructor injection). Without it, Quarkus removes the bean → MaskMe tries <code>new PhoneMaskingCondition()</code> via reflection → fails (no no-arg constructor).
+      </div>
+
+      <!-- Custom Conditions -->
+      <h2 id="custom-conditions">Step 2: Custom Conditions with CDI</h2>
+
+      <h3>Option 1: @Unremovable on the class (Recommended)</h3>
+<pre><span class="an">@ApplicationScoped</span>
+<span class="an">@Unremovable</span>
+<span class="kw">public class</span> <span class="tp">PhoneMaskingCondition</span> <span class="kw">implements</span> MaskMeCondition {
+
+    <span class="kw">private final</span> UserService userService;
+    <span class="kw">private</span> String input;
+
+    <span class="kw">public</span> <span class="fn">PhoneMaskingCondition</span>(UserService userService) {
+        <span class="kw">this</span>.userService = userService;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String inputValue) <span class="kw">this</span>.input = inputValue;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">boolean</span> anyMatch = userService.<span class="fn">findUsers</span>().stream()
+                .<span class="fn">anyMatch</span>(u -> u.<span class="fn">getPhone</span>().<span class="fn">equals</span>(maskedFieldValue));
+        <span class="kw">return</span> input != <span class="kw">null</span> && input.<span class="fn">equals</span>(maskedFieldValue) && anyMatch;
+    }
+}</pre>
+
+      <h3>Option 2: @Produces with @Unremovable in configuration</h3>
+<pre><span class="cm">// In MaskMeConfiguration class</span>
+<span class="an">@Produces</span> <span class="an">@ApplicationScoped</span> <span class="an">@Unremovable</span>
+<span class="kw">public</span> PhoneMaskingCondition <span class="fn">phoneMaskingCondition</span>(UserService userService) {
+    <span class="kw">return new</span> PhoneMaskingCondition(userService);
+}</pre>
+
+      <!-- REST Resource -->
+      <h2 id="resource">Step 3: REST Resource Integration</h2>
+<pre><span class="an">@Path</span>(<span class="str">"/users"</span>)
+<span class="kw">public class</span> <span class="tp">UserResource</span> {
+
+    <span class="an">@Inject</span> UserService userService;
+    <span class="an">@Inject</span> UserMapper userMapper;
+
+    <span class="an">@GET</span> <span class="an">@Path</span>(<span class="str">"/masked/{id}"</span>)
+    <span class="an">@Produces</span>(MediaType.APPLICATION_JSON)
+    <span class="kw">public</span> UserDto <span class="fn">getMaskedUserById</span>(<span class="an">@PathParam</span>(<span class="str">"id"</span>) Long id,
+                                     <span class="an">@HeaderParam</span>(<span class="str">"Mask-Input"</span>) String maskInput) {
+        UserDto dto = userMapper.<span class="fn">toDto</span>(userService.<span class="fn">findUserById</span>(id));
+        <span class="kw">return</span> MaskMeInitializer.<span class="fn">mask</span>(dto, MaskMeOnInput.<span class="kw">class</span>, maskInput);
+    }
+}</pre>
+
+      <!-- Native -->
+      <h2 id="native">Native Compilation Support</h2>
+<pre><span class="an">@RegisterForReflection</span>({
+        AlwaysMaskMeCondition.<span class="kw">class</span>,
+        MaskMeOnInput.<span class="kw">class</span>,
+        PhoneMaskingCondition.<span class="kw">class</span>
+})
+<span class="kw">public class</span> <span class="tp">ReflectionConfiguration</span> {}</pre>
+
+      <!-- Testing -->
+      <h2 id="testing">Testing with Quarkus</h2>
+<pre><span class="an">@QuarkusTest</span>
+<span class="kw">class</span> <span class="tp">UserResourceIntegrationTest</span> {
+
+    <span class="an">@Test</span>
+    <span class="kw">void</span> <span class="fn">testMaskedEndpoint</span>() {
+        <span class="fn">given</span>()
+            .<span class="fn">header</span>(<span class="str">"Mask-Input"</span>, <span class="str">"maskMe"</span>)
+        .<span class="fn">when</span>()
+            .<span class="fn">get</span>(<span class="str">"/users/masked/1"</span>)
+        .<span class="fn">then</span>()
+            .<span class="fn">statusCode</span>(<span class="num">200</span>)
+            .<span class="fn">body</span>(<span class="str">"password"</span>, <span class="fn">equalTo</span>(<span class="str">"****"</span>))
+            .<span class="fn">body</span>(<span class="str">"email"</span>, <span class="fn">containsString</span>(<span class="str">"@masked.com"</span>));
+    }
+}</pre>
+
+      <!-- Differences -->
+      <h2 id="differences">Quarkus vs Spring</h2>
+      <table>
+        <thead><tr><th>Aspect</th><th>Spring</th><th>Quarkus</th></tr></thead>
+        <tbody>
+          <tr><td>Bean Registration</td><td><code>@Bean</code> methods</td><td><code>@Produces</code> methods</td></tr>
+          <tr><td>Bean Lookup</td><td><code>applicationContext.getBean(type)</code></td><td><code>CDI.current().select(type).get()</code></td></tr>
+          <tr><td>Bean Lifecycle</td><td>All beans kept at runtime</td><td>Unused beans removed at build time</td></tr>
+          <tr><td>Programmatic Lookup</td><td>Works automatically</td><td>Requires <code>@Unremovable</code></td></tr>
+          <tr><td>Optimization</td><td>Runtime optimization</td><td>Build-time optimization</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Common Issues -->
+      <h2 id="issues">Common Issues &amp; Solutions</h2>
+      <div class="callout danger">
+        <strong>"No bean found for required type" Error</strong>
+        Add <code>@Unremovable</code> annotation to your condition beans or producer methods.
+      </div>
+      <div class="callout warn">
+        <strong>Beans Marked as Unused During Build</strong>
+        This confirms you need <code>@Unremovable</code>. Quarkus removes beans not directly <code>@Inject</code>ed.
+      </div>
+      <div class="callout info">
+        <strong>Constructor Injection Not Working</strong>
+        Use producer methods with <code>@Unremovable</code> for conditions that need dependencies injected.
+      </div>
+      <div class="callout info">
+        <strong>Framework Provider Returns Null</strong>
+        Ensure beans are registered and return <code>null</code> on exception to allow fallback to reflection.
+      </div>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <a href="spring.html">
+          <span class="label">← Previous</span>
+          <span class="title">Spring Guide</span>
+        </a>
+        <a href="conditions.html">
+          <span class="label">Next →</span>
+          <span class="title">Conditions &amp; Patterns</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaskMe – Field Masking Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link active"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="content">
+
+      <!-- Hero -->
+      <div class="hero">
+        <h1>🔒 MaskMe</h1>
+        <p>A modern, annotation-based Java library for dynamically masking sensitive data in objects. Supports classes, records, conditional masking, and any framework.</p>
+        <div class="badge-row">
+          <span class="badge green">✓ Annotation-based</span>
+          <span class="badge green">✓ Conditional masking</span>
+          <span class="badge blue">✓ Framework-agnostic</span>
+          <span class="badge blue">✓ Thread-safe</span>
+          <span class="badge amber">✓ Java 17+</span>
+        </div>
+      </div>
+
+      <!-- Key Features -->
+      <h2 id="features">Key Features</h2>
+      <div class="card-grid">
+        <div class="card">
+          <span class="icon-lg">🏷️</span>
+          <h4>Annotation-Based</h4>
+          <p>Simple <code>@MaskMe</code> annotation on any field or record component.</p>
+        </div>
+        <div class="card">
+          <span class="icon-lg">🔀</span>
+          <h4>Conditional Masking</h4>
+          <p>Mask based on runtime conditions — roles, environment, time, or custom logic.</p>
+        </div>
+        <div class="card">
+          <span class="icon-lg">🔌</span>
+          <h4>Framework-Agnostic</h4>
+          <p>Works with Spring, Quarkus, or pure Java. You choose the integration.</p>
+        </div>
+        <div class="card">
+          <span class="icon-lg">🧵</span>
+          <h4>Thread-Safe</h4>
+          <p>ThreadLocal-based input management. Safe for concurrent web requests.</p>
+        </div>
+        <div class="card">
+          <span class="icon-lg">📎</span>
+          <h4>Field Referencing</h4>
+          <p>Dynamic <code>{fieldName}</code> syntax to build mask values from other fields.</p>
+        </div>
+        <div class="card">
+          <span class="icon-lg">🔄</span>
+          <h4>Custom Converters</h4>
+          <p>Override default type conversion with scoped, priority-based converters.</p>
+        </div>
+      </div>
+
+      <!-- Installation -->
+      <h2 id="installation">Installation</h2>
+      <div class="install-group">
+        <div class="install-tabs">
+          <button class="install-tab active" data-panel="maven-install">Maven</button>
+          <button class="install-tab" data-panel="gradle-install">Gradle</button>
+        </div>
+        <div id="maven-install" class="install-panel active">
+<pre>&lt;<span class="kw">dependency</span>&gt;
+    &lt;<span class="kw">groupId</span>&gt;io.github.java-msdt&lt;/<span class="kw">groupId</span>&gt;
+    &lt;<span class="kw">artifactId</span>&gt;maskme&lt;/<span class="kw">artifactId</span>&gt;
+    &lt;<span class="kw">version</span>&gt;1.0.0&lt;/<span class="kw">version</span>&gt;
+&lt;/<span class="kw">dependency</span>&gt;</pre>
+        </div>
+        <div id="gradle-install" class="install-panel">
+<pre><span class="fn">implementation</span> <span class="str">'io.github.java-msdt:maskme:1.0.0'</span></pre>
+        </div>
+      </div>
+
+      <!-- Quick Start -->
+      <h2 id="quickstart">5-Minute Quick Start</h2>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Add the Dependency</h4>
+          <p>Add MaskMe to your project using Maven or Gradle (see <a href="#installation">Installation</a> above).</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Annotate Your Data</h4>
+<pre><span class="kw">public record</span> <span class="tp">UserDto</span>(
+        <span class="an">@MaskMe</span>(conditions = {AlwaysMaskMeCondition.<span class="kw">class</span>}, maskValue = <span class="str">"****"</span>)
+        String password,
+
+        <span class="an">@MaskMe</span>(conditions = {MaskMeOnInput.<span class="kw">class</span>}, maskValue = <span class="str">"{name}@masked.com"</span>)
+        String email,
+
+        String name <span class="cm">// Used in the field reference above</span>
+) {}</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Use in Your Application</h4>
+<pre><span class="an">@RestController</span>
+<span class="kw">public class</span> <span class="tp">UserController</span> {
+
+    <span class="an">@GetMapping</span>(<span class="str">"/user/{id}"</span>)
+    <span class="kw">public</span> UserDto <span class="fn">getUser</span>(<span class="an">@PathVariable</span> Long id,
+                           <span class="an">@RequestHeader</span>(<span class="str">"X-Mask-Level"</span>) String maskLevel) {
+
+        UserDto dto = userService.getUserDto(id);
+        <span class="kw">return</span> MaskMeInitializer.<span class="fn">mask</span>(dto, MaskMeOnInput.<span class="kw">class</span>, maskLevel);
+    }
+}</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Configure Your Framework (Optional)</h4>
+          <p>For production use with dependency injection, see the framework-specific guides:</p>
+          <ul>
+            <li><a href="pure-java.html">Pure Java Setup</a></li>
+            <li><a href="spring.html">Spring Setup</a></li>
+            <li><a href="quarkus.html">Quarkus Setup</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Quick Examples -->
+      <h2 id="examples">Quick Examples</h2>
+
+      <h3>Basic Masking</h3>
+<pre><span class="cm">// Always mask</span>
+<span class="an">@MaskMe</span>(conditions = {AlwaysMaskMeCondition.<span class="kw">class</span>}, maskValue = <span class="str">"***"</span>)
+String sensitiveData;
+
+<span class="cm">// Conditional masking</span>
+<span class="an">@MaskMe</span>(conditions = {MaskMeOnInput.<span class="kw">class</span>}, maskValue = <span class="str">"HIDDEN"</span>)
+String conditionalData;</pre>
+
+      <h3>Field References</h3>
+<pre><span class="an">@MaskMe</span>(conditions = {AlwaysMaskMeCondition.<span class="kw">class</span>}, maskValue = <span class="str">"{firstName}@company.com"</span>)
+String email; <span class="cm">// Results in "Ahmed@company.com" if firstName is "Ahmed"</span></pre>
+
+      <h3>Multiple Conditions</h3>
+<pre><span class="an">@MaskMe</span>(conditions = {RoleBasedCondition.<span class="kw">class</span>, EnvironmentCondition.<span class="kw">class</span>})
+String data; <span class="cm">// Masked if ANY condition returns true</span></pre>
+
+      <!-- Which Guide -->
+      <h2 id="guides">Which Guide Do I Need?</h2>
+      <div class="card-grid">
+        <a href="pure-java.html" class="card" style="text-decoration:none;">
+          <span class="icon-lg">☕</span>
+          <h4>Pure Java</h4>
+          <p style="color:var(--text-muted)">No framework. Manual Map-based DI. Lightweight and portable.</p>
+        </a>
+        <a href="spring.html" class="card" style="text-decoration:none;">
+          <span class="icon-lg">🌱</span>
+          <h4>Spring Framework</h4>
+          <p style="color:var(--text-muted)">@Bean registration, Security integration, @ConfigurationProperties.</p>
+        </a>
+        <a href="quarkus.html" class="card" style="text-decoration:none;">
+          <span class="icon-lg">⚡</span>
+          <h4>Quarkus</h4>
+          <p style="color:var(--text-muted)">@Produces + @Unremovable, CDI, native compilation support.</p>
+        </a>
+      </div>
+
+      <!-- Logging -->
+      <h2 id="logging">Logging Configuration</h2>
+      <p>MaskMe includes zero-overhead logging disabled by default for production performance.</p>
+
+      <h4>Via System Properties</h4>
+<pre>-Dmaskme.logging.enabled=true -Dmaskme.logging.level=DEBUG</pre>
+
+      <h4>Via Environment Variables</h4>
+<pre>export MASKME_LOGGING_ENABLED=true
+export MASKME_LOGGING_LEVEL=DEBUG</pre>
+
+      <h4>Programmatically</h4>
+<pre>MaskMeLogger.<span class="fn">enable</span>(Level.FINE);  <span class="cm">// DEBUG level</span>
+MaskMeLogger.<span class="fn">enable</span>(Level.INFO);  <span class="cm">// INFO level</span>
+MaskMeLogger.<span class="fn">disable</span>();            <span class="cm">// Disable completely</span></pre>
+
+      <table>
+        <thead><tr><th>Level</th><th>Java Mapping</th><th>What Gets Logged</th></tr></thead>
+        <tbody>
+          <tr><td>DEBUG</td><td>Level.FINE</td><td>Condition creation, field processing traces</td></tr>
+          <tr><td>INFO</td><td>Level.INFO</td><td>Processor initialization, framework setup</td></tr>
+          <tr><td>WARN</td><td>Level.WARNING</td><td>Fallback conversions, missing fields</td></tr>
+          <tr><td>ERROR</td><td>Level.SEVERE</td><td>Condition creation errors, invalid inputs</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Best Practices -->
+      <h2 id="best-practices">Best Practices</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h4>🚀 Startup</h4>
+          <ul class="feature-list">
+            <li>Configure framework provider once at startup</li>
+            <li>Clear global converters to prevent leaks</li>
+            <li>Register custom converters after clearing</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>🫘 Bean Management</h4>
+          <ul class="feature-list">
+            <li>Declare conditions as framework beans</li>
+            <li>Use DI for custom conditions</li>
+            <li>Leverage framework config properties</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>🧹 Memory</h4>
+          <ul class="feature-list">
+            <li>Use lifecycle hooks to clear converters</li>
+            <li>Clear request-scoped converters in finally blocks</li>
+            <li>Avoid leaks with proper ThreadLocal cleanup</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>🧪 Testing</h4>
+          <ul class="feature-list">
+            <li>Use thread-local converters for isolation</li>
+            <li>Clear converters in @BeforeEach/@AfterEach</li>
+            <li>Test with different condition inputs</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Troubleshooting -->
+      <h2 id="troubleshooting">Troubleshooting</h2>
+      <div class="callout warn">
+        <strong>NoSuchBeanDefinitionException (Spring/Quarkus)</strong>
+        Declare built-in conditions as beans in your configuration. See the framework-specific guides.
+      </div>
+      <div class="callout danger">
+        <strong>Memory Leaks</strong>
+        Use <code>MaskMeInitializer</code> for automatic cleanup (recommended), or always call <code>clearInputs()</code> in finally blocks.
+      </div>
+      <div class="callout info">
+        <strong>Type Conversion Errors</strong>
+        Provide valid mask values for the field type. Check supported types in the <a href="converters.html">converter documentation</a>.
+      </div>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <div></div>
+        <a href="architecture.html">
+          <span class="label">Next →</span>
+          <span class="title">Library Architecture</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conditions &amp; Patterns – MaskMe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link active"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <h1>🎯 Custom Conditions &amp; Field Patterns</h1>
+      <p>Learn how to implement complex business logic for conditional masking and customize field placeholder syntax.</p>
+
+      <div class="toc">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#interface">MaskMeCondition Interface</a></li>
+          <li><a href="#builtin">Built-in Conditions</a></li>
+          <li><a href="#custom">Creating Custom Conditions</a></li>
+          <li><a href="#patterns">Field Reference Patterns</a></li>
+          <li><a href="#best-practices">Best Practices</a></li>
+          <li><a href="#pitfalls">Common Pitfalls</a></li>
+        </ul>
+      </div>
+
+      <!-- Interface -->
+      <h2 id="interface">MaskMeCondition Interface</h2>
+<pre><span class="kw">public interface</span> <span class="tp">MaskMeCondition</span> {
+    <span class="cm">/** Sets runtime input for the condition */</span>
+    <span class="kw">default void</span> <span class="fn">setInput</span>(Object input) { }
+
+    <span class="cm">/** Determines if a field should be masked */</span>
+    <span class="kw">boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField);
+}</pre>
+
+      <!-- Built-in -->
+      <h2 id="builtin">Built-in Conditions</h2>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>AlwaysMaskMeCondition</h4>
+          <p>Always returns <code>true</code>. Use for fields that should always be masked regardless of context.</p>
+<pre><span class="kw">public boolean</span> <span class="fn">shouldMask</span>(...) {
+    <span class="kw">return true</span>;
+}</pre>
+        </div>
+        <div class="card">
+          <h4>MaskMeOnInput</h4>
+          <p>Masks only when input equals <code>"maskMe"</code> (case-insensitive). Use for header-driven conditional masking.</p>
+<pre><span class="kw">public boolean</span> <span class="fn">shouldMask</span>(...) {
+    <span class="kw">return</span> input != <span class="kw">null</span>
+        && input.<span class="fn">equalsIgnoreCase</span>(<span class="str">"maskMe"</span>);
+}</pre>
+        </div>
+      </div>
+
+      <!-- Custom Conditions -->
+      <h2 id="custom">Creating Custom Conditions</h2>
+
+      <h3>1. Environment-Based Condition</h3>
+<pre><span class="kw">public class</span> <span class="tp">EnvironmentBasedCondition</span> <span class="kw">implements</span> MaskMeCondition {
+    <span class="kw">private</span> String environment;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String) <span class="kw">this</span>.environment = (String) input;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">return</span> <span class="str">"production"</span>.<span class="fn">equalsIgnoreCase</span>(environment);
+    }
+}
+
+<span class="cm">// Usage</span>
+MaskMeInitializer.<span class="fn">mask</span>(dto, EnvironmentBasedCondition.<span class="kw">class</span>, <span class="str">"production"</span>);</pre>
+
+      <h3>2. Role-Based Condition</h3>
+<pre><span class="kw">public class</span> <span class="tp">RoleBasedCondition</span> <span class="kw">implements</span> MaskMeCondition {
+    <span class="kw">private</span> String requiredRole;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String) <span class="kw">this</span>.requiredRole = (String) input;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        String currentRole = <span class="fn">getCurrentUserRole</span>(); <span class="cm">// From security context</span>
+        <span class="kw">return</span> !requiredRole.<span class="fn">equals</span>(currentRole);
+    }
+}</pre>
+
+      <h3>3. Value-Based Condition</h3>
+<pre><span class="kw">public class</span> <span class="tp">ValueBasedCondition</span> <span class="kw">implements</span> MaskMeCondition {
+    <span class="kw">private</span> Object thresholdValue;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) { <span class="kw">this</span>.thresholdValue = input; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">if</span> (maskedFieldValue <span class="kw">instanceof</span> Number && thresholdValue <span class="kw">instanceof</span> Number) {
+            <span class="kw">return</span> ((Number) maskedFieldValue).<span class="fn">doubleValue</span>() > ((Number) thresholdValue).<span class="fn">doubleValue</span>();
+        }
+        <span class="kw">return false</span>;
+    }
+}
+
+<span class="cm">// Mask salaries above 100,000</span>
+MaskMeInitializer.<span class="fn">mask</span>(dto, ValueBasedCondition.<span class="kw">class</span>, <span class="num">100000</span>);</pre>
+
+      <h3>4. Time-Based Condition</h3>
+<pre><span class="kw">public class</span> <span class="tp">TimeBasedCondition</span> <span class="kw">implements</span> MaskMeCondition {
+    <span class="kw">private</span> LocalTime startTime, endTime;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String timeRange) {
+            String[] times = timeRange.<span class="fn">split</span>(<span class="str">"-"</span>);
+            <span class="kw">this</span>.startTime = LocalTime.<span class="fn">parse</span>(times[<span class="num">0</span>]);
+            <span class="kw">this</span>.endTime = LocalTime.<span class="fn">parse</span>(times[<span class="num">1</span>]);
+        }
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        LocalTime now = LocalTime.<span class="fn">now</span>();
+        <span class="kw">return</span> now.<span class="fn">isAfter</span>(startTime) && now.<span class="fn">isBefore</span>(endTime);
+    }
+}
+
+<span class="cm">// Mask during business hours</span>
+MaskMeInitializer.<span class="fn">mask</span>(dto, TimeBasedCondition.<span class="kw">class</span>, <span class="str">"09:00-17:00"</span>);</pre>
+
+      <h3>5. Complex Business Logic (with DI)</h3>
+<pre><span class="an">@Component</span>
+<span class="kw">public class</span> <span class="tp">BusinessRuleCondition</span> <span class="kw">implements</span> MaskMeCondition {
+
+    <span class="an">@Autowired</span> <span class="kw">private</span> UserService userService;
+    <span class="kw">private</span> String ruleType;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String) <span class="kw">this</span>.ruleType = (String) input;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">return switch</span> (ruleType) {
+            <span class="kw">case</span> <span class="str">"GDPR_COMPLIANCE"</span> -> <span class="fn">isGdprApplicable</span>(objectContainingMaskedField);
+            <span class="kw">case</span> <span class="str">"USER_CONSENT"</span>    -> !<span class="fn">hasUserConsent</span>(objectContainingMaskedField);
+            <span class="kw">default</span> -> <span class="kw">false</span>;
+        };
+    }
+}</pre>
+
+      <!-- Field Patterns -->
+      <h2 id="patterns">Field Reference Patterns</h2>
+
+      <h3>Default Pattern: <code>{fieldName}</code></h3>
+<pre><span class="kw">public record</span> <span class="tp">UserDto</span>(
+    <span class="an">@MaskMe</span>(conditions = {AlwaysMaskMeCondition.<span class="kw">class</span>}, maskValue = <span class="str">"{firstName}@masked.com"</span>)
+    String email,
+
+    <span class="an">@MaskMe</span>(conditions = {MaskMeOnInput.<span class="kw">class</span>}, maskValue = <span class="str">"{id}-{department}"</span>)
+    String displayName,
+
+    String firstName, Long id, String department
+) {}</pre>
+
+      <h3>Configuring Custom Patterns</h3>
+<pre><span class="cm">// Set at application startup</span>
+MaskMeFieldAccessUtil.<span class="fn">setUserPattern</span>(Pattern.<span class="fn">compile</span>(<span class="str">"\\[([^]]+)]"</span>));</pre>
+
+      <h3>Available Pattern Options</h3>
+      <table>
+        <thead><tr><th>Pattern Type</th><th>Example Usage</th><th>Regex</th></tr></thead>
+        <tbody>
+          <tr><td>Curly Braces (Default)</td><td><code>{fieldName}</code></td><td><code>\{([^}]+)\}</code></td></tr>
+          <tr><td>Square Brackets</td><td><code>[fieldName]</code></td><td><code>\[([^]]+)]</code></td></tr>
+          <tr><td>Parentheses</td><td><code>(fieldName)</code></td><td><code>\(([^)]+)\)</code></td></tr>
+          <tr><td>Angle Brackets</td><td><code>&lt;fieldName&gt;</code></td><td><code>&lt;([^&gt;]+)&gt;</code></td></tr>
+          <tr><td>Dollar Sign</td><td><code>${fieldName}</code></td><td><code>\$\{([^}]+)\}</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Multiple Field References</h3>
+<pre><span class="an">@MaskMe</span>(conditions = {AlwaysMaskMeCondition.<span class="kw">class</span>},
+        maskValue = <span class="str">"{firstName}.{lastName}@{company}.com"</span>)
+String email;</pre>
+
+      <!-- Best Practices -->
+      <h2 id="best-practices">Best Practices</h2>
+
+      <div class="compare">
+        <div class="card good">
+          <h4>✅ Good — Focused Responsibility</h4>
+<pre><span class="kw">public class</span> <span class="tp">AdminOnlyCondition</span>
+    <span class="kw">implements</span> MaskMeCondition {
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(...) {
+        <span class="kw">return</span> !<span class="fn">isCurrentUserAdmin</span>();
+    }
+}</pre>
+        </div>
+        <div class="card bad">
+          <h4>❌ Avoid — Multiple Responsibilities</h4>
+<pre><span class="kw">public class</span> <span class="tp">ComplexCondition</span>
+    <span class="kw">implements</span> MaskMeCondition {
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(...) {
+        <span class="kw">return</span> !<span class="fn">isAdmin</span>() && <span class="fn">isProd</span>()
+            && <span class="fn">isBusinessHours</span>();
+    }
+}</pre>
+        </div>
+      </div>
+
+      <ul class="feature-list">
+        <li>Always validate input type in <code>setInput()</code> with <code>instanceof</code></li>
+        <li>Cache expensive operations in <code>setInput()</code>, keep <code>shouldMask()</code> fast</li>
+        <li>Register conditions as singletons for memory efficiency</li>
+        <li>Use framework DI for conditions that need external services</li>
+      </ul>
+
+      <!-- Pitfalls -->
+      <h2 id="pitfalls">Common Pitfalls</h2>
+
+      <div class="callout danger">
+        <strong>Thread Safety</strong>
+        Never use <code>static</code> fields for input state. Use instance fields — MaskMe manages per-thread isolation via ThreadLocal.
+      </div>
+
+      <div class="callout warn">
+        <strong>Field Reference Limitations</strong>
+        Cannot reference nested object fields directly: <code>{address.street}</code> won't work. References work within the same object level.
+      </div>
+
+      <div class="compare">
+        <div class="card bad">
+          <h4>❌ Unsafe Casting</h4>
+<pre><span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+    <span class="kw">this</span>.value = (String) input;
+    <span class="cm">// ClassCastException risk!</span>
+}</pre>
+        </div>
+        <div class="card good">
+          <h4>✅ Safe Type Checking</h4>
+<pre><span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+    <span class="kw">if</span> (input <span class="kw">instanceof</span> String s)
+        <span class="kw">this</span>.value = s;
+}</pre>
+        </div>
+      </div>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <a href="quarkus.html">
+          <span class="label">← Previous</span>
+          <span class="title">Quarkus Guide</span>
+        </a>
+        <a href="converters.html">
+          <span class="label">Next →</span>
+          <span class="title">Converters</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

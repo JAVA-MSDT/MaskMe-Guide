@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spring Guide – MaskMe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link active"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <h1>🌱 Spring Framework Integration</h1>
+      <p>Leverage Spring's dependency injection, configuration management, and web capabilities with MaskMe.</p>
+      <p><a href="https://github.com/JAVA-MSDT/MaskMe-Guide/tree/main/Spring-maskme" target="_blank">📦 Full example project on GitHub →</a></p>
+
+      <div class="toc">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#running">Running the Application</a></li>
+          <li><a href="#configuration">Framework Configuration</a></li>
+          <li><a href="#custom-conditions">Custom Conditions with Spring DI</a></li>
+          <li><a href="#controller">Controller Integration</a></li>
+          <li><a href="#security">Spring Security Integration</a></li>
+          <li><a href="#testing">Testing</a></li>
+          <li><a href="#issues">Common Issues</a></li>
+        </ul>
+      </div>
+
+      <!-- Running -->
+      <h2 id="running">Running the Application</h2>
+<pre>cd Spring-maskme
+mvn clean install
+mvn spring-boot:run</pre>
+      <p>The application starts on <code>http://localhost:9090</code></p>
+
+      <table>
+        <thead><tr><th>Endpoint</th><th>Method</th><th>Headers</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>/users/{id}</code></td><td>GET</td><td>—</td><td>Get user without masking</td></tr>
+          <tr><td><code>/users/masked/{id}</code></td><td>GET</td><td><code>Mask-Input: maskMe</code></td><td>Get user with conditional masking</td></tr>
+          <tr><td><code>/users</code></td><td>GET</td><td><code>Mask-Input</code> + <code>Mask-Phone</code></td><td>Get all users with masking</td></tr>
+          <tr><td><code>/users/user/{id}</code></td><td>GET</td><td>—</td><td>Get domain entity with masking</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Configuration -->
+      <h2 id="configuration">Step 1: Framework Configuration</h2>
+<pre><span class="an">@Configuration</span>
+<span class="an">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="tp">MaskingConfiguration</span> {
+
+    <span class="kw">private final</span> ApplicationContext applicationContext;
+
+    <span class="an">@PostConstruct</span>
+    <span class="kw">public void</span> <span class="fn">setupMaskMe</span>() {
+        <span class="fn">registerFrameworkProvider</span>();
+        <span class="fn">setupCustomConverters</span>();
+    }
+
+    <span class="kw">private void</span> <span class="fn">registerFrameworkProvider</span>() {
+        MaskMeConditionFactory.<span class="fn">setFrameworkProvider</span>(<span class="kw">new</span> MaskMeFrameworkProvider() {
+            <span class="an">@Override</span>
+            <span class="kw">public</span> &lt;T&gt; T <span class="fn">getInstance</span>(Class&lt;T&gt; type) {
+                <span class="kw">try</span> {
+                    <span class="kw">return</span> applicationContext.<span class="fn">getBean</span>(type);
+                } <span class="kw">catch</span> (Exception e) {
+                    <span class="kw">throw new</span> MaskMeException(<span class="str">"Failed to get bean: "</span> + type.<span class="fn">getName</span>(), e);
+                }
+            }
+        });
+    }
+
+    <span class="kw">private void</span> <span class="fn">setupCustomConverters</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomEmailConverter());
+    }
+
+    <span class="cm">// Declare built-in conditions as beans</span>
+    <span class="an">@Bean</span>
+    <span class="kw">public</span> AlwaysMaskMeCondition <span class="fn">alwaysMaskMeCondition</span>() {
+        <span class="kw">return new</span> AlwaysMaskMeCondition();
+    }
+
+    <span class="an">@Bean</span>
+    <span class="kw">public</span> MaskMeOnInput <span class="fn">maskMeOnInput</span>() {
+        <span class="kw">return new</span> MaskMeOnInput();
+    }
+
+    <span class="an">@PreDestroy</span>
+    <span class="kw">public void</span> <span class="fn">cleanup</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+    }
+}</pre>
+
+      <div class="callout warn">
+        <strong>⚠️ Why register built-in conditions as @Bean?</strong>
+        MaskMe creates a NEW instance every time via reflection unless you register them as Spring singletons. Registration gives you memory efficiency, no reflection overhead, and is required for custom conditions with dependencies.
+      </div>
+
+      <div class="compare">
+        <div class="card bad">
+          <h4>❌ Without @Bean</h4>
+          <p>3 separate instances created via reflection for 3 fields using the same condition.</p>
+        </div>
+        <div class="card good">
+          <h4>✅ With @Bean</h4>
+          <p>1 singleton instance reused across all fields. Memory efficient, no reflection overhead.</p>
+        </div>
+      </div>
+
+      <!-- Custom Conditions -->
+      <h2 id="custom-conditions">Step 2: Custom Conditions with Spring DI</h2>
+<pre><span class="an">@Component</span>
+<span class="kw">public class</span> <span class="tp">PhoneMaskingCondition</span> <span class="kw">implements</span> MaskMeCondition {
+
+    <span class="kw">private final</span> UserService userService;
+    <span class="kw">private</span> String input;
+
+    <span class="kw">public</span> <span class="fn">PhoneMaskingCondition</span>(UserService userService) {
+        <span class="kw">this</span>.userService = userService; <span class="cm">// Spring injects this</span>
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String inputValue) {
+            <span class="kw">this</span>.input = inputValue;
+        }
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">boolean</span> anyMatch = userService.<span class="fn">findUsers</span>().stream()
+                .<span class="fn">anyMatch</span>(u -> u.<span class="fn">getPhone</span>().<span class="fn">equals</span>(maskedFieldValue));
+        <span class="kw">return</span> input != <span class="kw">null</span> && input.<span class="fn">equals</span>(maskedFieldValue) && anyMatch;
+    }
+}</pre>
+
+      <!-- Controller -->
+      <h2 id="controller">Step 3: Controller Integration</h2>
+
+      <h3>Using MaskMeInitializer (Recommended)</h3>
+<pre><span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="str">"/api/users"</span>)
+<span class="an">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="tp">UserController</span> {
+
+    <span class="kw">private final</span> UserService userService;
+    <span class="kw">private final</span> UserMapper userMapper;
+
+    <span class="an">@GetMapping</span>(<span class="str">"/{id}"</span>)
+    <span class="kw">public</span> UserDto <span class="fn">getUser</span>(<span class="an">@PathVariable</span> Long id,
+                           <span class="an">@RequestHeader</span>(value = <span class="str">"X-Mask-Level"</span>, defaultValue = <span class="str">"none"</span>) String maskLevel) {
+
+        User user = userService.<span class="fn">findById</span>(id);
+        UserDto dto = userMapper.<span class="fn">toDto</span>(user);
+
+        <span class="kw">return</span> MaskMeInitializer.<span class="fn">mask</span>(dto,
+                MaskMeOnInput.<span class="kw">class</span>, maskLevel,
+                RoleBasedMaskCondition.<span class="kw">class</span>, <span class="str">"ADMIN"</span>
+        );
+    }
+}</pre>
+
+      <h3>Error Handling</h3>
+<pre><span class="an">@ExceptionHandler</span>(MaskMeException.<span class="kw">class</span>)
+<span class="kw">public</span> ResponseEntity&lt;ErrorResponse&gt; <span class="fn">handleMaskingException</span>(MaskMeException e) {
+    <span class="kw">return</span> ResponseEntity.<span class="fn">status</span>(HttpStatus.INTERNAL_SERVER_ERROR)
+            .<span class="fn">body</span>(<span class="kw">new</span> ErrorResponse(<span class="str">"MASKING_ERROR"</span>, <span class="str">"Failed to mask sensitive data"</span>));
+}</pre>
+
+      <!-- Security -->
+      <h2 id="security">Spring Security Integration</h2>
+<pre><span class="an">@Component</span>
+<span class="kw">public class</span> <span class="tp">SecurityAwareMaskCondition</span> <span class="kw">implements</span> MaskMeCondition {
+
+    <span class="kw">private</span> String requiredAuthority;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String) <span class="kw">this</span>.requiredAuthority = (String) input;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        Authentication auth = SecurityContextHolder.<span class="fn">getContext</span>().<span class="fn">getAuthentication</span>();
+        <span class="kw">if</span> (auth == <span class="kw">null</span> || !auth.<span class="fn">isAuthenticated</span>()) <span class="kw">return true</span>;
+        <span class="kw">return</span> auth.<span class="fn">getAuthorities</span>().stream()
+                .<span class="fn">noneMatch</span>(a -> a.<span class="fn">getAuthority</span>().<span class="fn">equals</span>(requiredAuthority));
+    }
+}
+
+<span class="cm">// Usage</span>
+<span class="an">@GetMapping</span>(<span class="str">"/secure/{id}"</span>)
+<span class="an">@PreAuthorize</span>(<span class="str">"hasRole('USER')"</span>)
+<span class="kw">public</span> UserDto <span class="fn">getSecureUser</span>(<span class="an">@PathVariable</span> Long id) {
+    <span class="kw">return</span> MaskMeInitializer.<span class="fn">mask</span>(dto, SecurityAwareMaskCondition.<span class="kw">class</span>, <span class="str">"ROLE_ADMIN"</span>);
+}</pre>
+
+      <!-- Testing -->
+      <h2 id="testing">Testing with Spring</h2>
+<pre><span class="an">@SpringBootTest</span>(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+<span class="an">@AutoConfigureMockMvc</span>
+<span class="kw">class</span> <span class="tp">UserControllerIntegrationTest</span> {
+
+    <span class="an">@Autowired</span> <span class="kw">private</span> MockMvc mockMvc;
+
+    <span class="an">@Test</span>
+    <span class="kw">void</span> <span class="fn">testMaskedEndpoint</span>() <span class="kw">throws</span> Exception {
+        mockMvc.<span class="fn">perform</span>(<span class="fn">get</span>(<span class="str">"/api/users/1"</span>)
+                .<span class="fn">header</span>(<span class="str">"X-Mask-Level"</span>, <span class="str">"maskMe"</span>))
+                .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())
+                .<span class="fn">andExpect</span>(<span class="fn">jsonPath</span>(<span class="str">"$.password"</span>).<span class="fn">value</span>(<span class="str">"****"</span>))
+                .<span class="fn">andExpect</span>(<span class="fn">jsonPath</span>(<span class="str">"$.email"</span>).<span class="fn">value</span>(<span class="fn">containsString</span>(<span class="str">"@masked.com"</span>)));
+    }
+
+    <span class="an">@Test</span>
+    <span class="an">@WithMockUser</span>(roles = <span class="str">"ADMIN"</span>)
+    <span class="kw">void</span> <span class="fn">testSecureEndpointWithAdmin</span>() <span class="kw">throws</span> Exception {
+        mockMvc.<span class="fn">perform</span>(<span class="fn">get</span>(<span class="str">"/secure/1"</span>))
+                .<span class="fn">andExpect</span>(<span class="fn">status</span>().<span class="fn">isOk</span>())
+                .<span class="fn">andExpect</span>(<span class="fn">jsonPath</span>(<span class="str">"$.ssn"</span>).<span class="fn">value</span>(<span class="fn">not</span>(<span class="str">"***-**-****"</span>)));
+    }
+}</pre>
+
+      <h3>Test Coverage</h3>
+      <table>
+        <thead><tr><th>Test</th><th>What It Verifies</th></tr></thead>
+        <tbody>
+          <tr><td>getUserById_WithoutMasking</td><td>Unmasked endpoint returns original data</td></tr>
+          <tr><td>getMaskedUserById_WithMaskInput</td><td>MaskMeOnInput condition masks correctly</td></tr>
+          <tr><td>getUsers_WithPhoneMasking</td><td>Custom PhoneMaskingCondition works with DI</td></tr>
+          <tr><td>getMaskedUserById_WithExcludeMaskMe</td><td>@ExcludeMaskMe prevents nested processing</td></tr>
+          <tr><td>getMaskedUserById_WithFieldReference</td><td>Field referencing {fieldName} works</td></tr>
+          <tr><td>getMaskedUserById_WithCustomConverter</td><td>Custom converters override defaults</td></tr>
+          <tr><td>getMaskedUserById_WithDifferentTypes</td><td>Type conversion for Long, LocalDate, BigDecimal, Instant</td></tr>
+          <tr><td>getMaskedUserById_WithNestedObject</td><td>Nested object masking works recursively</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Common Issues -->
+      <h2 id="issues">Common Issues &amp; Solutions</h2>
+      <div class="callout danger">
+        <strong>NoSuchBeanDefinitionException</strong>
+        Declare built-in conditions as <code>@Bean</code> in your configuration class.
+      </div>
+      <div class="callout warn">
+        <strong>Memory Leaks</strong>
+        Use <code>@PreDestroy</code> to clear global converters. Clear request-scoped converters in finally blocks.
+      </div>
+      <div class="callout info">
+        <strong>Field Pattern Not Working</strong>
+        Configure the pattern in <code>@PostConstruct</code>: <code>MaskMeFieldAccessUtil.setUserPattern(Pattern.compile("\\{([^}]+)\\}"))</code>
+      </div>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <a href="pure-java.html">
+          <span class="label">← Previous</span>
+          <span class="title">Pure Java Guide</span>
+        </a>
+        <a href="quarkus.html">
+          <span class="label">Next →</span>
+          <span class="title">Quarkus Guide</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

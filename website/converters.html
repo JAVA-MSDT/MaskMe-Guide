@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Converters – MaskMe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link active"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <h1>🔄 Scoped Converter Registry</h1>
+      <p>A converter management system that provides multiple isolation levels for safe and flexible converter usage. Override or extend default type conversion behavior with priority-based, scoped converters.</p>
+
+      <div class="toc">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#why">Why Custom Converters?</a></li>
+          <li><a href="#scope">Scope Hierarchy &amp; Priority</a></li>
+          <li><a href="#creating">Creating Custom Converters</a></li>
+          <li><a href="#registering">Registering Converters</a></li>
+          <li><a href="#chain">Converter Chain Execution</a></li>
+          <li><a href="#framework">Usage by Framework</a></li>
+          <li><a href="#testing">Testing</a></li>
+          <li><a href="#rules">Safety Rules</a></li>
+        </ul>
+      </div>
+
+      <!-- Why -->
+      <h2 id="why">Why Custom Converters?</h2>
+      <div class="card-grid">
+        <div class="card">
+          <span class="icon-lg">🔧</span>
+          <h4>Override Defaults</h4>
+          <p>Replace default behavior for specific field types or field names.</p>
+        </div>
+        <div class="card">
+          <span class="icon-lg">🏢</span>
+          <h4>Business Logic</h4>
+          <p>Implement domain-specific masking rules (email patterns, financial rounding).</p>
+        </div>
+        <div class="card">
+          <span class="icon-lg">🔒</span>
+          <h4>Scoped Isolation</h4>
+          <p>Thread-local, request-scoped, or global — clean scope boundaries.</p>
+        </div>
+        <div class="card">
+          <span class="icon-lg">⚡</span>
+          <h4>Priority-Based</h4>
+          <p>Higher priority converters execute first. First non-null result wins.</p>
+        </div>
+      </div>
+
+      <!-- Scope -->
+      <h2 id="scope">Scope Hierarchy &amp; Priority</h2>
+      <div class="diagram">┌─────────────────────────────────────────────┐
+│           CONVERTER EXECUTION ORDER         │
+├─────────────────────────────────────────────┤
+│ 1. THREAD-SCOPED (Highest Priority)         │
+│    • Background jobs, test isolation        │
+│                                             │
+│ 2. REQUEST-SCOPED (Web Applications)        │
+│    • User-specific, session-based rules     │
+│                                             │
+│ 3. GLOBAL-SCOPED (Application-wide)         │
+│    • Default app converters, shared rules   │
+│                                             │
+│ 4. DEFAULT CONVERTERS (Lowest Priority)     │
+│    • Built-in type converters, fallback     │
+└─────────────────────────────────────────────┘</div>
+
+      <!-- Creating -->
+      <h2 id="creating">Creating Custom Converters</h2>
+
+      <h3>Custom Email Converter</h3>
+<pre><span class="kw">public class</span> <span class="tp">CustomEmailConverter</span> <span class="kw">implements</span> MaskMeConverter {
+
+    <span class="an">@Override</span>
+    <span class="kw">public int</span> <span class="fn">getPriority</span>() { <span class="kw">return</span> <span class="num">10</span>; } <span class="cm">// Higher than defaults (0)</span>
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">canConvert</span>(Class&lt;?&gt; type) { <span class="kw">return</span> type == String.<span class="kw">class</span>; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> Object <span class="fn">convert</span>(String maskValue, Class&lt;?&gt; targetType,
+                          Object originalValue, Object objectContainingMaskedField,
+                          String maskedFieldName) {
+        <span class="cm">// IMPORTANT: Process field references first</span>
+        String processedValue = MaskMeFieldAccessUtil
+                .<span class="fn">getMaskedValueFromAnotherFieldOrMaskedValue</span>(maskValue, objectContainingMaskedField);
+
+        <span class="kw">if</span> (maskedFieldName.<span class="fn">contains</span>(<span class="str">"email"</span>)) {
+            <span class="kw">return</span> processedValue.<span class="fn">isEmpty</span>() ? <span class="str">"[EMAIL PROTECTED]"</span> : processedValue;
+        }
+        <span class="kw">return null</span>; <span class="cm">// Let other converters handle it</span>
+    }
+}</pre>
+
+      <div class="callout info">
+        <strong>Important: Field Reference Processing</strong>
+        Always call <code>MaskMeFieldAccessUtil.getMaskedValueFromAnotherFieldOrMaskedValue()</code> in your converter to support <code>{fieldName}</code> references in mask values.
+      </div>
+
+      <h3>Financial Converter</h3>
+<pre><span class="kw">public class</span> <span class="tp">FinancialConverter</span> <span class="kw">implements</span> MaskMeConverter {
+
+    <span class="an">@Override</span> <span class="kw">public int</span> <span class="fn">getPriority</span>() { <span class="kw">return</span> <span class="num">20</span>; }
+    <span class="an">@Override</span> <span class="kw">public boolean</span> <span class="fn">canConvert</span>(Class&lt;?&gt; type) { <span class="kw">return</span> type == BigDecimal.<span class="kw">class</span>; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> Object <span class="fn">convert</span>(String maskValue, Class&lt;?&gt; targetType,
+                          Object originalValue, Object objectContainingMaskedField,
+                          String maskedFieldName) {
+        <span class="kw">if</span> (<span class="str">"salary"</span>.<span class="fn">equals</span>(maskedFieldName) && maskValue.<span class="fn">isEmpty</span>()
+                && originalValue <span class="kw">instanceof</span> BigDecimal bd) {
+            <span class="kw">return</span> bd.<span class="fn">setScale</span>(<span class="num">2</span>, RoundingMode.HALF_UP);
+        }
+        <span class="kw">return new</span> BigDecimal(<span class="str">"0.00"</span>);
+    }
+}</pre>
+
+      <h3>Custom Date Converter</h3>
+<pre><span class="kw">public class</span> <span class="tp">CustomDateConverter</span> <span class="kw">implements</span> MaskMeConverter {
+
+    <span class="an">@Override</span> <span class="kw">public int</span> <span class="fn">getPriority</span>() { <span class="kw">return</span> <span class="num">5</span>; }
+    <span class="an">@Override</span> <span class="kw">public boolean</span> <span class="fn">canConvert</span>(Class&lt;?&gt; type) { <span class="kw">return</span> type == LocalDate.<span class="kw">class</span>; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> Object <span class="fn">convert</span>(String maskValue, Class&lt;?&gt; targetType,
+                          Object originalValue, Object objectContainingMaskedField,
+                          String maskedFieldName) {
+        <span class="kw">return switch</span> (maskedFieldName) {
+            <span class="kw">case</span> <span class="str">"birthDate"</span>  -> LocalDate.<span class="fn">of</span>(<span class="num">1900</span>, <span class="num">1</span>, <span class="num">1</span>);
+            <span class="kw">case</span> <span class="str">"hiringDate"</span> -> LocalDate.<span class="fn">now</span>().<span class="fn">minusYears</span>(<span class="num">1</span>);
+            <span class="kw">default</span> -> <span class="kw">null</span>;
+        };
+    }
+}</pre>
+
+      <!-- Chain -->
+      <h2 id="chain">Converter Chain Execution</h2>
+      <div class="diagram">1. MaskMeInitializer.mask(dto) → MaskMeProcessor.process(dto)
+   ↓
+2. For each field with @MaskMe annotation:
+   ↓
+3. Check shouldMask() conditions
+   ↓
+4. If masking needed → call ConverterRegistry.convertToFieldType()
+   ↓
+5. Execute converters by priority:
+   ├── User Converter 1 (Priority: 20) ← First match wins!
+   ├── User Converter 2 (Priority: 15)
+   ├── User Converter 3 (Priority: 10)
+   ├── PrimitiveConverter (Priority: 0)
+   ├── NumberConverter (Priority: 0)
+   ├── DateTimeConverter (Priority: 0)
+   ├── SpecialTypeConverter (Priority: 0)
+   └── FallbackConverter (Priority: 0) ← Last resort
+   ↓
+6. Return converted value to field</div>
+
+      <h3>Key Rules</h3>
+      <ul>
+        <li><strong>Higher priority executes first</strong> — set priority &gt; 0 to override defaults</li>
+        <li><strong>Return null to pass control</strong> — the next converter in the chain handles it</li>
+        <li><strong>First non-null wins</strong> — the first matching converter that returns non-null is used</li>
+        <li><strong>Field context available</strong> — you get fieldName, originalValue, the containing object, and the maskValue</li>
+      </ul>
+
+      <!-- Registering -->
+      <h2 id="registering">Registering Converters</h2>
+
+      <h3>Global Scope (Application-wide)</h3>
+<pre>MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomEmailConverter());</pre>
+
+      <h3>Thread-Local Scope (Thread isolation)</h3>
+<pre>MaskMeConverterRegistry.<span class="fn">registerThreadLocal</span>(<span class="kw">new</span> CustomEmailConverter());</pre>
+
+      <h3>Request Scope (Web requests)</h3>
+<pre>MaskMeConverterRegistry.<span class="fn">startRequestScope</span>(<span class="str">"request-123"</span>);
+MaskMeConverterRegistry.<span class="fn">registerRequestScoped</span>(<span class="kw">new</span> CustomEmailConverter());</pre>
+
+      <!-- Framework Usage -->
+      <h2 id="framework">Usage by Framework</h2>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-spring">Spring</button>
+        <button class="tab-btn" data-tab="tab-quarkus">Quarkus</button>
+        <button class="tab-btn" data-tab="tab-java">Pure Java</button>
+      </div>
+
+      <div id="tab-spring" class="tab-panel active">
+<pre><span class="an">@Configuration</span>
+<span class="kw">public class</span> <span class="tp">MaskingConfiguration</span> {
+
+    <span class="an">@PostConstruct</span>
+    <span class="kw">public void</span> <span class="fn">initializeConverters</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomEmailConverter());
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> FinancialConverter());
+    }
+
+    <span class="an">@PreDestroy</span>
+    <span class="kw">public void</span> <span class="fn">cleanup</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+    }
+}</pre>
+      </div>
+
+      <div id="tab-quarkus" class="tab-panel">
+<pre><span class="an">@ApplicationScoped</span>
+<span class="kw">public class</span> <span class="tp">MaskingInitializer</span> {
+
+    <span class="an">@PostConstruct</span>
+    <span class="kw">public void</span> <span class="fn">init</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomEmailConverter());
+    }
+
+    <span class="an">@PreDestroy</span>
+    <span class="kw">public void</span> <span class="fn">destroy</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+    }
+}</pre>
+      </div>
+
+      <div id="tab-java" class="tab-panel">
+<pre><span class="kw">public class</span> <span class="tp">App</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(String[] args) {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomEmailConverter());
+
+        <span class="cm">// ... process data ...</span>
+
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>(); <span class="cm">// Cleanup</span>
+    }
+}</pre>
+      </div>
+
+      <!-- Testing -->
+      <h2 id="testing">Testing with Scoped Converters</h2>
+<pre><span class="an">@ExtendWith</span>(MockitoExtension.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="tp">UserServiceTest</span> {
+
+    <span class="an">@BeforeEach</span>
+    <span class="kw">void</span> <span class="fn">setUp</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearThreadLocal</span>();
+        MaskMeConverterRegistry.<span class="fn">registerThreadLocal</span>(<span class="kw">new</span> TestEmailConverter());
+    }
+
+    <span class="an">@AfterEach</span>
+    <span class="kw">void</span> <span class="fn">tearDown</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearThreadLocal</span>();
+    }
+
+    <span class="an">@Test</span>
+    <span class="kw">void</span> <span class="fn">testUserMasking</span>() {
+        UserDto masked = MaskMeInitializer.<span class="fn">mask</span>(user);
+        assertThat(masked.<span class="fn">email</span>()).<span class="fn">isEqualTo</span>(<span class="str">"[TEST-MASKED]"</span>);
+    }
+}</pre>
+
+      <!-- Safety Rules -->
+      <h2 id="rules">Safety Rules</h2>
+
+      <div class="compare">
+        <div class="card good">
+          <h4>✅ DOs</h4>
+          <ul class="feature-list">
+            <li>Clear global converters at startup</li>
+            <li>Use thread-local for tests</li>
+            <li>Always clean up in finally blocks</li>
+            <li>Use request scope for web apps</li>
+          </ul>
+        </div>
+        <div class="card bad">
+          <h4>❌ DON'Ts</h4>
+          <ul>
+            <li style="color:var(--red)">❌ Clear global during request processing</li>
+            <li style="color:var(--red)">❌ Forget to clean up thread-local (memory leak)</li>
+            <li style="color:var(--red)">❌ Mix scopes incorrectly</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Scope Decision Tree</h3>
+      <div class="diagram">                    Need a converter?
+                         │
+        ┌────────────────┼────────────────┐
+        │                │                │
+   Affects all     Affects specific   Affects single
+   application?       users?           request/test?
+        │                │                │
+        ▼                ▼                ▼
+   GLOBAL SCOPE    REQUEST SCOPE     THREAD SCOPE
+   registerGlobal  registerRequest   registerThreadLocal
+   clearGlobal     endRequestScope   clearThreadLocal</div>
+
+      <h3>Troubleshooting</h3>
+      <table>
+        <thead><tr><th>Problem</th><th>Solution</th></tr></thead>
+        <tbody>
+          <tr><td>Converter not executing</td><td>Check scope — is it registered in the correct scope?</td></tr>
+          <tr><td>Wrong converter executing</td><td>Check priority — higher priority executes first</td></tr>
+          <tr><td>Memory leak</td><td>Always call <code>clearThreadLocal()</code> in finally block</td></tr>
+          <tr><td>Test contamination</td><td>Use <code>@BeforeEach</code> to clear thread-local converters</td></tr>
+          <tr><td>Request scope not working</td><td>Ensure <code>startRequestScope()</code> is called first</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <a href="conditions.html">
+          <span class="label">← Previous</span>
+          <span class="title">Conditions &amp; Patterns</span>
+        </a>
+        <a href="benchmark.html">
+          <span class="label">Next →</span>
+          <span class="title">Benchmark</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>
