@@ -56,9 +56,13 @@ public class MaskMeConfiguration {
      * @param ev the startup event (provided by Quarkus)
      */
     void onStart(@Observes StartupEvent ev) {
-        System.out.println("MaskMeConfiguration startup event triggered");
+        // Step 1: (Optional) Enable logging for debugging — disable in production for zero overhead
         MaskMeLogger.enable(Level.FINE);
+
+        // Step 2: Register Quarkus CDI so MaskMe resolves conditions via dependency injection
         registerMaskConditionProvider();
+
+        // Step 3: Clear and register custom converters to override default type conversion
         setupCustomConverters();
     }
 
@@ -72,6 +76,10 @@ public class MaskMeConfiguration {
      *
      * @return a new AlwaysMaskMeCondition instance
      */
+    // Step 4: Declare built-in conditions as CDI beans with @Produces + @Unremovable
+    // REQUIRED — MaskMe is a pure Java library, Quarkus won't find these without @Produces
+    // @Unremovable is CRITICAL — Quarkus removes "unused" beans at build time,
+    // but MaskMe looks them up programmatically via CDI.current().select(type).get()
     @Produces
     @ApplicationScoped
     @Unremovable
@@ -79,15 +87,6 @@ public class MaskMeConfiguration {
         return new AlwaysMaskMeCondition();
     }
 
-    /**
-     * Produces a MaskMeOnInput condition bean for CDI.
-     * <p>
-     * The {@code @Unremovable} annotation is CRITICAL - it prevents Quarkus from
-     * removing this bean during build-time optimization.
-     * </p>
-     *
-     * @return a new MaskMeOnInput instance
-     */
     @Produces
     @ApplicationScoped
     @Unremovable
@@ -125,7 +124,10 @@ public class MaskMeConfiguration {
      * </p>
      */
     private void setupCustomConverters() {
+        // Step 3a: Clear global converters to avoid memory leaks from previous runs
         MaskMeConverterRegistry.clearGlobal();
+
+        // Step 3b: Register your custom converters (priority > 0 to override defaults)
         MaskMeConverterRegistry.registerGlobal(new CustomStringConverter());
     }
 
@@ -138,6 +140,7 @@ public class MaskMeConfiguration {
      *
      * @param ev the shutdown event (provided by Quarkus)
      */
+    // Step 5: Clean up on shutdown — prevents memory leaks from the current run
     void onStop(@Observes io.quarkus.runtime.ShutdownEvent ev) {
         MaskMeConverterRegistry.clearGlobal();
     }

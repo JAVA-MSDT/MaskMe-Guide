@@ -56,16 +56,16 @@ public class MaskMeConfiguration {
      * @param userService the user service instance to inject into conditions
      */
     public static void setupMaskMe(UserService userService) {
-        // Logger configuration
+        // Step 1: (Optional) Enable logging for debugging — disable in production for zero overhead
         MaskMeLogger.enable(Level.INFO);
 
-        // Register condition instances for dependency injection
+        // Step 2: Register condition instances (built-in + custom with dependencies) in the Map
         registerConditionInstances(userService);
 
-        // Register framework provider for pure Java
+        // Step 3: Register the framework provider so MaskMe resolves conditions from your Map
         registerFrameworkProvider();
 
-        // Setup custom converters
+        // Step 4: Clear and register custom converters to override default type conversion
         setupCustomConverters();
     }
 
@@ -83,7 +83,12 @@ public class MaskMeConfiguration {
      * @param userService the user service to inject into PhoneMaskingCondition
      */
     private static void registerConditionInstances(UserService userService) {
-        // Register PhoneMaskingCondition with UserService dependency
+        // Step 2a: Register built-in conditions as singletons (optional but recommended for performance)
+        // Without this, MaskMe creates a new instance via reflection each time
+        // instances.put(AlwaysMaskMeCondition.class, new AlwaysMaskMeCondition());
+        // instances.put(MaskMeOnInput.class, new MaskMeOnInput());
+
+        // Step 2b: Register custom conditions WITH their dependencies (required — no no-arg constructor)
         instances.put(PhoneMaskingCondition.class, new PhoneMaskingCondition(userService));
     }
 
@@ -112,7 +117,10 @@ public class MaskMeConfiguration {
      * </p>
      */
     private static void setupCustomConverters() {
+        // Step 4a: Clear global converters to avoid memory leaks from previous runs
         MaskMeConverterRegistry.clearGlobal();
+
+        // Step 4b: Register your custom converters (priority > 0 to override defaults)
         MaskMeConverterRegistry.registerGlobal(new CustomStringConverter());
     }
 
@@ -129,6 +137,7 @@ public class MaskMeConfiguration {
      * }</pre>
      */
     public static void destroy() {
+        // Step 5: Clean up on shutdown — call this to prevent memory leaks
         MaskMeConverterRegistry.clearGlobal();
         instances.clear();
     }

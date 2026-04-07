@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration Reference – MaskMe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button class="menu-toggle" aria-label="Toggle menu">☰</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <h1>MaskMe</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span> Overview</a>
+        <a href="architecture.html" class="nav-link"><span class="icon">🏛️</span> Architecture</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Framework Guides</div>
+        <a href="pure-java.html" class="nav-link"><span class="icon">☕</span> Pure Java</a>
+        <a href="spring.html" class="nav-link"><span class="icon">🌱</span> Spring</a>
+        <a href="quarkus.html" class="nav-link"><span class="icon">⚡</span> Quarkus</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Configuration</div>
+        <a href="configuration.html" class="nav-link active"><span class="icon">⚙️</span> Config Reference</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Advanced</div>
+        <a href="conditions.html" class="nav-link"><span class="icon">🎯</span> Conditions &amp; Patterns</a>
+        <a href="converters.html" class="nav-link"><span class="icon">🔄</span> Converters</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Resources</div>
+        <a href="benchmark.html" class="nav-link"><span class="icon">📊</span> Benchmark</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Built by <a href="https://www.linkedin.com/in/java-msdt/" target="_blank">Ahmed Samy</a><br>
+      <a href="https://github.com/JAVA-MSDT/maskme" target="_blank">GitHub</a> · <a href="https://revolut.me/ahmedsamy85" target="_blank">☕ Buy me a coffee</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <h1>⚙️ Configuration Reference</h1>
+      <p>Complete configuration classes for each framework — copy, paste, and adapt to your project.</p>
+
+      <div class="toc">
+        <h4>On This Page</h4>
+        <ul>
+          <li><a href="#overview">Configuration Overview</a></li>
+          <li><a href="#pure-java">Pure Java Configuration</a></li>
+          <li><a href="#spring">Spring Configuration</a></li>
+          <li><a href="#quarkus">Quarkus Configuration</a></li>
+          <li><a href="#custom-condition">Custom Condition (per framework)</a></li>
+          <li><a href="#custom-converter">Custom Converter</a></li>
+        </ul>
+      </div>
+
+      <!-- Overview -->
+      <h2 id="overview">Configuration Overview</h2>
+      <p>Every MaskMe integration follows the same steps, regardless of framework. The difference is <em>how</em> each framework wires things up.</p>
+
+      <table>
+        <thead><tr><th>Step</th><th>Pure Java</th><th>Spring</th><th>Quarkus</th></tr></thead>
+        <tbody>
+          <tr><td>1. Logging</td><td><code>MaskMeLogger.enable()</code></td><td><code>MaskMeLogger.enable()</code></td><td><code>MaskMeLogger.enable()</code></td></tr>
+          <tr><td>2. Framework provider</td><td>Map lookup</td><td><code>applicationContext.getBean()</code></td><td><code>CDI.current().select().get()</code></td></tr>
+          <tr><td>3. Custom converters</td><td>clearGlobal + registerGlobal</td><td>clearGlobal + registerGlobal</td><td>clearGlobal + registerGlobal</td></tr>
+          <tr><td>4. Built-in conditions</td><td>Map.put()</td><td><code>@Bean</code></td><td><code>@Produces @Unremovable</code></td></tr>
+          <tr><td>5. Custom conditions</td><td>Map.put(new Cond(dep))</td><td><code>@Component</code></td><td><code>@ApplicationScoped @Unremovable</code></td></tr>
+          <tr><td>6. Cleanup</td><td><code>destroy()</code></td><td><code>@PreDestroy</code></td><td><code>@Observes ShutdownEvent</code></td></tr>
+        </tbody>
+      </table>
+
+      <!-- Pure Java section placeholder -->
+      <h2 id="pure-java">☕ Pure Java Configuration</h2>
+      <p>No framework — manual Map-based dependency injection. <a href="https://github.com/JAVA-MSDT/MaskMe-Guide/tree/main/Pure-java-maskme" target="_blank">Full project →</a></p>
+
+<pre><span class="kw">public class</span> <span class="tp">MaskMeConfiguration</span> {
+
+    <span class="kw">private</span> <span class="fn">MaskMeConfiguration</span>() {}
+
+    <span class="kw">private static final</span> Map&lt;Class&lt;?&gt;, Object&gt; instances = <span class="kw">new</span> HashMap&lt;&gt;();
+
+    <span class="kw">public static void</span> <span class="fn">setupMaskMe</span>(UserService userService) {
+        <span class="cm">// Step 1: (Optional) Enable logging for debugging — disable in production for zero overhead</span>
+        MaskMeLogger.<span class="fn">enable</span>(Level.INFO);
+
+        <span class="cm">// Step 2: Register condition instances (built-in + custom with dependencies) in the Map</span>
+        <span class="fn">registerConditionInstances</span>(userService);
+
+        <span class="cm">// Step 3: Register the framework provider so MaskMe resolves conditions from your Map</span>
+        <span class="fn">registerFrameworkProvider</span>();
+
+        <span class="cm">// Step 4: Clear and register custom converters to override default type conversion</span>
+        <span class="fn">setupCustomConverters</span>();
+    }
+
+    <span class="kw">private static void</span> <span class="fn">registerConditionInstances</span>(UserService userService) {
+        <span class="cm">// Step 2a: Register built-in conditions as singletons (optional but recommended for performance)</span>
+        <span class="cm">// Without this, MaskMe creates a new instance via reflection each time</span>
+        <span class="cm">// instances.put(AlwaysMaskMeCondition.class, new AlwaysMaskMeCondition());</span>
+        <span class="cm">// instances.put(MaskMeOnInput.class, new MaskMeOnInput());</span>
+
+        <span class="cm">// Step 2b: Register custom conditions WITH their dependencies (required — no no-arg constructor)</span>
+        instances.<span class="fn">put</span>(PhoneMaskingCondition.<span class="kw">class</span>, <span class="kw">new</span> PhoneMaskingCondition(userService));
+    }
+
+    <span class="kw">private static void</span> <span class="fn">registerFrameworkProvider</span>() {
+        MaskMeConditionFactory.<span class="fn">setFrameworkProvider</span>(<span class="kw">new</span> MaskMeFrameworkProvider() {
+            <span class="an">@Override</span>
+            <span class="kw">public</span> &lt;T&gt; T <span class="fn">getInstance</span>(Class&lt;T&gt; type) {
+                <span class="kw">return</span> (T) instances.<span class="fn">get</span>(type);
+            }
+        });
+    }
+
+    <span class="kw">private static void</span> <span class="fn">setupCustomConverters</span>() {
+        <span class="cm">// Step 4a: Clear global converters to avoid memory leaks from previous runs</span>
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+
+        <span class="cm">// Step 4b: Register your custom converters (priority &gt; 0 to override defaults)</span>
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomStringConverter());
+    }
+
+    <span class="kw">public static void</span> <span class="fn">destroy</span>() {
+        <span class="cm">// Step 5: Clean up on shutdown — call this to prevent memory leaks</span>
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+        instances.<span class="fn">clear</span>();
+    }
+}</pre>
+
+      <!-- Spring section placeholder -->
+      <h2 id="spring">🌱 Spring Configuration</h2>
+      <p>Uses Spring's ApplicationContext for automatic DI. <a href="https://github.com/JAVA-MSDT/MaskMe-Guide/tree/main/Spring-maskme" target="_blank">Full project →</a></p>
+
+<pre><span class="an">@Configuration</span>
+<span class="an">@RequiredArgsConstructor</span>
+<span class="an">@Slf4j</span>
+<span class="kw">public class</span> <span class="tp">MaskMeConfiguration</span> {
+
+    <span class="kw">private final</span> ApplicationContext applicationContext;
+
+    <span class="an">@PostConstruct</span>
+    <span class="kw">public void</span> <span class="fn">setupMaskMe</span>() {
+        <span class="cm">// Step 1: (Optional) Enable logging for debugging — disable in production for zero overhead</span>
+        MaskMeLogger.<span class="fn">enable</span>(Level.INFO);
+
+        <span class="cm">// Step 2: Register Spring ApplicationContext so MaskMe resolves conditions via DI</span>
+        <span class="fn">registerMaskConditionProvider</span>();
+
+        <span class="cm">// Step 3: Clear and register custom converters to override default type conversion</span>
+        <span class="fn">setupCustomConverters</span>();
+
+        <span class="cm">// Step 4: (Optional) Configure a custom field reference pattern</span>
+        <span class="cm">// Default is {fieldName}, you can change to [fieldName] or others</span>
+        <span class="cm">// MaskMeFieldAccessUtil.setUserPattern(Pattern.compile("\\{([^}]+)}"));</span>
+    }
+
+    <span class="cm">// Step 5: Declare built-in conditions as Spring @Bean singletons</span>
+    <span class="cm">// REQUIRED — MaskMe is a pure Java library, Spring won't find these without @Bean</span>
+    <span class="cm">// Without this, MaskMe falls back to reflection and creates a new instance each time</span>
+    <span class="an">@Bean</span>
+    <span class="kw">public</span> AlwaysMaskMeCondition <span class="fn">alwaysMaskMeCondition</span>() {
+        <span class="kw">return new</span> AlwaysMaskMeCondition();
+    }
+
+    <span class="an">@Bean</span>
+    <span class="kw">public</span> MaskMeOnInput <span class="fn">maskMeOnInput</span>() {
+        <span class="kw">return new</span> MaskMeOnInput();
+    }
+
+    <span class="kw">private void</span> <span class="fn">registerMaskConditionProvider</span>() {
+        MaskMeConditionFactory.<span class="fn">setFrameworkProvider</span>(<span class="kw">new</span> MaskMeFrameworkProvider() {
+            <span class="an">@Override</span>
+            <span class="kw">public</span> &lt;T&gt; T <span class="fn">getInstance</span>(Class&lt;T&gt; type) {
+                <span class="kw">try</span> {
+                    <span class="kw">return</span> applicationContext.<span class="fn">getBean</span>(type);
+                } <span class="kw">catch</span> (Exception e) {
+                    log.<span class="fn">warn</span>(<span class="str">"Failed to get bean of type {} from the application context"</span>, type.<span class="fn">getName</span>(), e);
+                    <span class="kw">throw new</span> MaskMeException(<span class="str">"Failed to get bean: "</span> + type.<span class="fn">getName</span>(), e);
+                }
+            }
+        });
+    }
+
+    <span class="kw">private void</span> <span class="fn">setupCustomConverters</span>() {
+        <span class="cm">// Step 3a: Clear global converters to avoid memory leaks from previous application runs</span>
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+
+        <span class="cm">// Step 3b: Register your custom converters (priority &gt; 0 to override defaults)</span>
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomStringConverter());
+    }
+
+    <span class="cm">// Step 6: Clean up on shutdown — prevents memory leaks from the current run</span>
+    <span class="an">@PreDestroy</span>
+    <span class="kw">public void</span> <span class="fn">destroy</span>() {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+    }
+}</pre>
+
+      <!-- Quarkus section placeholder -->
+      <h2 id="quarkus">⚡ Quarkus Configuration</h2>
+      <p>Uses Quarkus CDI with <code>@Unremovable</code> to prevent build-time bean removal. <a href="https://github.com/JAVA-MSDT/MaskMe-Guide/tree/main/Quarkus-maskme" target="_blank">Full project →</a></p>
+
+<pre><span class="an">@ApplicationScoped</span>
+<span class="kw">public class</span> <span class="tp">MaskMeConfiguration</span> {
+
+    <span class="kw">void</span> <span class="fn">onStart</span>(<span class="an">@Observes</span> StartupEvent ev) {
+        <span class="cm">// Step 1: (Optional) Enable logging for debugging — disable in production for zero overhead</span>
+        MaskMeLogger.<span class="fn">enable</span>(Level.FINE);
+
+        <span class="cm">// Step 2: Register Quarkus CDI so MaskMe resolves conditions via dependency injection</span>
+        <span class="fn">registerMaskConditionProvider</span>();
+
+        <span class="cm">// Step 3: Clear and register custom converters to override default type conversion</span>
+        <span class="fn">setupCustomConverters</span>();
+    }
+
+    <span class="cm">// Step 4: Declare built-in conditions as CDI beans with @Produces + @Unremovable</span>
+    <span class="cm">// REQUIRED — MaskMe is a pure Java library, Quarkus won't find these without @Produces</span>
+    <span class="cm">// @Unremovable is CRITICAL — Quarkus removes "unused" beans at build time,</span>
+    <span class="cm">// but MaskMe looks them up programmatically via CDI.current().select(type).get()</span>
+    <span class="an">@Produces</span> <span class="an">@ApplicationScoped</span> <span class="an">@Unremovable</span>
+    <span class="kw">public</span> AlwaysMaskMeCondition <span class="fn">alwaysMaskMeCondition</span>() {
+        <span class="kw">return new</span> AlwaysMaskMeCondition();
+    }
+
+    <span class="an">@Produces</span> <span class="an">@ApplicationScoped</span> <span class="an">@Unremovable</span>
+    <span class="kw">public</span> MaskMeOnInput <span class="fn">maskMeOnInput</span>() {
+        <span class="kw">return new</span> MaskMeOnInput();
+    }
+
+    <span class="kw">private void</span> <span class="fn">registerMaskConditionProvider</span>() {
+        MaskMeConditionFactory.<span class="fn">setFrameworkProvider</span>(<span class="kw">new</span> MaskMeFrameworkProvider() {
+            <span class="an">@Override</span>
+            <span class="kw">public</span> &lt;T&gt; T <span class="fn">getInstance</span>(Class&lt;T&gt; type) {
+                <span class="kw">try</span> {
+                    <span class="kw">return</span> CDI.<span class="fn">current</span>().<span class="fn">select</span>(type).<span class="fn">get</span>();
+                } <span class="kw">catch</span> (Exception e) {
+                    <span class="kw">return null</span>; <span class="cm">// Fall back to reflection</span>
+                }
+            }
+        });
+    }
+
+    <span class="kw">private void</span> <span class="fn">setupCustomConverters</span>() {
+        <span class="cm">// Step 3a: Clear global converters to avoid memory leaks from previous runs</span>
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+
+        <span class="cm">// Step 3b: Register your custom converters (priority &gt; 0 to override defaults)</span>
+        MaskMeConverterRegistry.<span class="fn">registerGlobal</span>(<span class="kw">new</span> CustomStringConverter());
+    }
+
+    <span class="cm">// Step 5: Clean up on shutdown — prevents memory leaks from the current run</span>
+    <span class="kw">void</span> <span class="fn">onStop</span>(<span class="an">@Observes</span> ShutdownEvent ev) {
+        MaskMeConverterRegistry.<span class="fn">clearGlobal</span>();
+    }
+}</pre>
+
+      <!-- Custom Condition placeholder -->
+      <h2 id="custom-condition">🎯 Custom Condition (per framework)</h2>
+      <p>The same <code>PhoneMaskingCondition</code> logic, wired differently per framework. Note how the condition class itself is identical — only the annotations and DI mechanism change.</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="cond-java">Pure Java</button>
+        <button class="tab-btn" data-tab="cond-spring">Spring</button>
+        <button class="tab-btn" data-tab="cond-quarkus">Quarkus</button>
+      </div>
+
+      <div id="cond-java" class="tab-panel active">
+        <div class="callout info">
+          <strong>Pure Java:</strong> No annotations. Pass dependencies via constructor. Register in the Map.
+        </div>
+<pre><span class="kw">public class</span> <span class="tp">PhoneMaskingCondition</span> <span class="kw">implements</span> MaskMeCondition {
+
+    <span class="kw">private final</span> UserService userService;
+    <span class="kw">private</span> String input;
+
+    <span class="kw">public</span> <span class="fn">PhoneMaskingCondition</span>(UserService userService) {
+        <span class="kw">this</span>.userService = userService;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String inputValue) {
+            <span class="kw">this</span>.input = inputValue;
+        }
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">boolean</span> anyMatch = userService.<span class="fn">findUsers</span>().stream()
+                .<span class="fn">anyMatch</span>(u -> u.<span class="fn">getPhone</span>().<span class="fn">equals</span>(maskedFieldValue));
+        <span class="kw">return</span> input != <span class="kw">null</span> && input.<span class="fn">equals</span>(maskedFieldValue) && anyMatch;
+    }
+}
+
+<span class="cm">// Registration (in MaskMeConfiguration):</span>
+instances.<span class="fn">put</span>(PhoneMaskingCondition.<span class="kw">class</span>, <span class="kw">new</span> PhoneMaskingCondition(userService));</pre>
+      </div>
+
+      <div id="cond-spring" class="tab-panel">
+        <div class="callout info">
+          <strong>Spring:</strong> Add <code>@Component</code>. Spring auto-injects via constructor. No manual registration needed.
+        </div>
+<pre><span class="an">@Component</span>
+<span class="an">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> <span class="tp">PhoneMaskingCondition</span> <span class="kw">implements</span> MaskMeCondition {
+
+    <span class="kw">private final</span> UserService userService; <span class="cm">// Spring injects via constructor</span>
+    <span class="kw">private</span> String input;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String) {
+            <span class="kw">this</span>.input = (String) input;
+        }
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">boolean</span> anyMatch = userService.<span class="fn">findUsers</span>().stream()
+                .<span class="fn">anyMatch</span>(u -> u.<span class="fn">getPhone</span>().<span class="fn">equals</span>(maskedFieldValue));
+        <span class="kw">return</span> input != <span class="kw">null</span> && input.<span class="fn">equals</span>(maskedFieldValue) && anyMatch;
+    }
+}</pre>
+      </div>
+
+      <div id="cond-quarkus" class="tab-panel">
+        <div class="callout info">
+          <strong>Quarkus:</strong> Add <code>@ApplicationScoped @Unremovable</code>. CDI auto-injects via constructor.
+        </div>
+<pre><span class="an">@ApplicationScoped</span>
+<span class="an">@Unremovable</span>  <span class="cm">// CRITICAL — prevents Quarkus from removing this bean at build time</span>
+<span class="kw">public class</span> <span class="tp">PhoneMaskingCondition</span> <span class="kw">implements</span> MaskMeCondition {
+
+    <span class="kw">private final</span> UserService userService; <span class="cm">// CDI injects via constructor</span>
+    <span class="kw">private</span> String input;
+
+    <span class="kw">public</span> <span class="fn">PhoneMaskingCondition</span>(UserService userService) {
+        <span class="kw">this</span>.userService = userService;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">setInput</span>(Object input) {
+        <span class="kw">if</span> (input <span class="kw">instanceof</span> String inputValue) {
+            <span class="kw">this</span>.input = inputValue;
+        }
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">shouldMask</span>(Object maskedFieldValue, Object objectContainingMaskedField) {
+        <span class="kw">boolean</span> anyMatch = userService.<span class="fn">findUsers</span>().stream()
+                .<span class="fn">anyMatch</span>(u -> u.<span class="fn">getPhone</span>().<span class="fn">equals</span>(maskedFieldValue));
+        <span class="kw">return</span> input != <span class="kw">null</span> && input.<span class="fn">equals</span>(maskedFieldValue) && anyMatch;
+    }
+}</pre>
+      </div>
+
+      <!-- Custom Converter placeholder -->
+      <h2 id="custom-converter">🔄 Custom Converter</h2>
+      <p>Converters are framework-agnostic — the same class works in all three setups. Register it in your configuration's <code>setupCustomConverters()</code> method.</p>
+
+<pre><span class="kw">public class</span> <span class="tp">CustomStringConverter</span> <span class="kw">implements</span> MaskMeConverter {
+
+    <span class="an">@Override</span>
+    <span class="kw">public int</span> <span class="fn">priority</span>() {
+        <span class="kw">return</span> <span class="num">10</span>; <span class="cm">// Higher than default converters (0) — executes first</span>
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> <span class="fn">canConvert</span>(Class&lt;?&gt; type) {
+        <span class="kw">return</span> type == String.<span class="kw">class</span>;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> Object <span class="fn">convert</span>(String value, Class&lt;?&gt; targetType, Object originalValue,
+                          Object containingObject, String fieldName) {
+
+        <span class="cm">// IMPORTANT: Process field references first so {fieldName} syntax works</span>
+        String processValue = MaskMeFieldAccessUtil
+                .<span class="fn">getMaskedValueFromAnotherFieldOrMaskedValue</span>(value, containingObject);
+
+        <span class="kw">if</span> (fieldName.<span class="fn">contains</span>(<span class="str">"password"</span>)) {
+            <span class="kw">return</span> <span class="str">"************"</span>;
+        }
+
+        <span class="kw">if</span> (fieldName.<span class="fn">contains</span>(<span class="str">"email"</span>)) {
+            <span class="kw">if</span> (processValue.<span class="fn">isEmpty</span>()) {
+                <span class="kw">return</span> <span class="str">"[EMAIL PROTECTED]"</span>;
+            }
+            <span class="kw">return</span> processValue;
+        }
+
+        <span class="cm">// Return null to let the next converter in the chain handle it</span>
+        <span class="kw">return null</span>;
+    }
+}</pre>
+
+      <div class="callout success">
+        <strong>Registration is the same everywhere:</strong>
+        <code>MaskMeConverterRegistry.clearGlobal();</code> then <code>MaskMeConverterRegistry.registerGlobal(new CustomStringConverter());</code>
+      </div>
+
+      <!-- Page Nav -->
+      <div class="page-nav">
+        <a href="quarkus.html">
+          <span class="label">← Previous</span>
+          <span class="title">Quarkus Guide</span>
+        </a>
+        <a href="conditions.html">
+          <span class="label">Next →</span>
+          <span class="title">Conditions &amp; Patterns</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -64,16 +64,16 @@ public class MaskMeConfiguration {
      */
     @PostConstruct
     public void setupMaskMe() {
-        // Logger configuration
+        // Step 1: (Optional) Enable logging for debugging — disable in production for zero overhead
         MaskMeLogger.enable(Level.INFO);
 
-        // To register Spring as applicationContext so you can leverage DI inside CustomCondition.
+        // Step 2: Register Spring ApplicationContext so MaskMe resolves conditions via DI
         registerMaskConditionProvider();
 
-        // To override the default converters, or set up a new converter based on your need.
+        // Step 3: Clear and register custom converters to override default type conversion
         setupCustomConverters();
 
-        // Optional: Configure a custom field reference pattern
+        // Step 4: (Optional) Configure a custom field reference pattern
         // Default is {fieldName}, you can change to [fieldName] or others
         // MaskMeFieldAccessUtil.setUserPattern(Pattern.compile("\\{([^}]+)}"));
     }
@@ -89,25 +89,18 @@ public class MaskMeConfiguration {
      *
      * @return a new AlwaysMaskMeCondition instance
      */
+    // Step 5: Declare built-in conditions as Spring @Bean singletons
+    // REQUIRED — MaskMe is a pure Java library, Spring won't find these without @Bean
+    // Without this, MaskMe falls back to reflection and creates a new instance each time
     @Bean
     public AlwaysMaskMeCondition alwaysMaskMeCondition() {
         return new AlwaysMaskMeCondition();
     }
 
-    /**
-     * Declares MaskMeOnInput as a Spring bean.
-     * <p>
-     * This is REQUIRED because MaskMe is a pure Java library and doesn't
-     * automatically register its built-in conditions with Spring.
-     * </p>
-     *
-     * @return a new MaskMeOnInput instance
-     */
     @Bean
     public MaskMeOnInput maskMeOnInput() {
         return new MaskMeOnInput();
     }
-    // --- built-in conditions --- //
 
     /**
      * Registers the Spring ApplicationContext as the framework provider for MaskMe.
@@ -140,13 +133,10 @@ public class MaskMeConfiguration {
      * </p>
      */
     private void setupCustomConverters() {
-        // Clear Global
-        // to avoid any memory leak from the previous application run.
-        // that way you will avoid any custom register to live in memory
-        // due to the live reference from this run
+        // Step 3a: Clear global converters to avoid memory leaks from previous application runs
         MaskMeConverterRegistry.clearGlobal();
 
-        // Register user's custom converters
+        // Step 3b: Register your custom converters (priority > 0 to override defaults)
         MaskMeConverterRegistry.registerGlobal(new CustomStringConverter());
     }
 
@@ -157,11 +147,9 @@ public class MaskMeConfiguration {
      * is being destroyed. It clears all global converters to prevent memory leaks.
      * </p>
      */
+    // Step 6: Clean up on shutdown — prevents memory leaks from the current run
     @PreDestroy
     public void destroy() {
-        // to avoid any memory leak from the current application run.
-        // that way you will avoid any custom register to live in memory
-        // due to the live reference from this run
         MaskMeConverterRegistry.clearGlobal();
     }
 }
